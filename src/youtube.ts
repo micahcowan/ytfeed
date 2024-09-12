@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 export class Api {
     private _subs = new SubscriptionList(this);
 
@@ -8,13 +10,18 @@ export class Api {
 
 export class SubscriptionList implements AsyncIterable<Channel> {
     private _yt : Api;
+    private _pager : PagedIterator;
 
     constructor(yt : Api) {
+        this._pager = new PagedIterator;
         this._yt = yt;
     }
 
-    [Symbol.asyncIterator]() {
-        return new SubscriptionListAsyncIter;
+    async *[Symbol.asyncIterator]() {
+        for await (let item of this._pager) {
+            yield new Channel(item.snippet.title,
+                              item.snippet.resourceId.channelId);
+        }
     }
 
     getAsyncIter() {
@@ -22,14 +29,20 @@ export class SubscriptionList implements AsyncIterable<Channel> {
     }
 }
 
-export class SubscriptionListAsyncIter implements AsyncIterator<Channel>  {
-    n : number = 0;
-    next() : Promise<IteratorResult<Channel>> {
-        return new Promise((resolve, reject) => {
-            let n = ++this.n;
-            if (n > 5) { resolve({done: true, value: undefined}); }
-            setTimeout(() => { resolve({value: new Channel('title', n.toString()), done: false}); }, Math.random() * 4000);
-        });
+class PagedIterator {
+    private n = 0;
+    json? : any;
+    next_page? : string;
+
+    async *[Symbol.asyncIterator]() {
+        while (this.n != 8) {
+            this.json = await $.ajax(`./scratch/subs${this.n}.json`).catch((x) => {throw JSON.stringify(x)});
+
+            for await (let item of this.json.items) {
+                yield item;
+            }
+            ++this.n;
+        }
     }
 }
 
