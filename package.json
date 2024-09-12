@@ -11,7 +11,8 @@
   "author": "Micah Cowan <micah@addictivecode.org> (http://micah.cowan.name/)",
   "license": "MIT",
   "dependencies": {
-    "jquery": "^3.7.1"
+    "jquery": "^3.7.1",
+    "jquery-color": "^3.0.0"
   },
   "devDependencies": {
     "@types/jquery": "^3.5.30",

@@ -27,8 +27,8 @@ export class SubscriptionListAsyncIter implements AsyncIterator<Channel>  {
     next() : Promise<IteratorResult<Channel>> {
         return new Promise((resolve, reject) => {
             let n = ++this.n;
-            //if (n == 4) { reject(); }
-            setTimeout(() => { resolve({value: new Channel('title', n.toString()), done: (n == 10)}); }, Math.random() * 4000);
+            if (n > 5) { resolve({done: true, value: undefined}); }
+            setTimeout(() => { resolve({value: new Channel('title', n.toString()), done: false}); }, Math.random() * 4000);
         });
     }
 }

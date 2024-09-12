@@ -1,27 +1,26 @@
 import $ from 'jquery';
+import 'jquery-color';
 import * as YT from './youtube';
 
-function load() : void {
+async function asyncload() {
     let tube = new YT.Api;
     let body = $('body');
     body.append('<h1>Hello, lurdo!</h1>');
     let ul = $('<ul />');
+    ul.css('border', 'solid 2px red');
     body.append(ul);
     let loading = $('<li><em>loading...</en></li>');
     ul.append(loading);
-    let iter = tube.subscriptions.getAsyncIter();
-    let harvester = (result : IteratorResult<YT.Channel>) => {
+    for await (let chan of tube.subscriptions) {
         let li = $('<li />');
-        li.text(`${result.value.title} (${result.value.id})`);
+        li.text(`${chan.title} (${chan.id})`);
+        li.hide();
         li.insertBefore(loading);
-        if (result.done) {
-            loading.remove();
-        }
-        else {
-            iter.next().then(harvester);
-        }
-    };
-    iter.next().then(harvester);
+        li.slideDown('fast');
+    }
+    // Loading is finished
+    loading.slideUp(() => { loading.remove(); });
+    ul.animate({'border-color': 'white'}, {duration: 1200});
 }
 
-$( document ).ready(load);
+$( document ).ready(asyncload);
