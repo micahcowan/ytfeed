@@ -1,5 +1,7 @@
 import $ from 'jquery';
 
+const TESTING=1
+
 export class Api {
     private _subs = new SubscriptionList(this);
 
@@ -10,15 +12,15 @@ export class Api {
 
 export class SubscriptionList implements AsyncIterable<Channel> {
     private _yt : Api;
-    private _pager : PagedIterator;
+    private _items : PagedItemsIterator;
 
     constructor(yt : Api) {
-        this._pager = new PagedIterator;
+        this._items = new PagedItemsIterator;
         this._yt = yt;
     }
 
     async *[Symbol.asyncIterator]() {
-        for await (let item of this._pager) {
+        for await (let item of this._items) {
             yield new Channel(item.snippet.title,
                               item.snippet.resourceId.channelId);
         }
@@ -29,19 +31,36 @@ export class SubscriptionList implements AsyncIterable<Channel> {
     }
 }
 
-class PagedIterator {
-    private n = 0;
-    json? : any;
-    next_page? : string;
+type SubscriptionItem = {
+    snippet: {
+        title: string;
+        resourceId: {
+            channelId: string;
+        }
+    };
+};
+
+class PagedItemsIterator implements AsyncIterable<SubscriptionItem> {
+    private _pager : AsyncIterable<RequestPage>
+        = new DummyPagedRequestIterator;
 
     async *[Symbol.asyncIterator]() {
-        while (this.n != 8) {
-            this.json = await $.ajax(`./scratch/subs${this.n}.json`).catch((x) => {throw JSON.stringify(x)});
-
-            for await (let item of this.json.items) {
+        for await (let page of (this._pager)) {
+            for await (let item of page.items) {
                 yield item;
             }
-            ++this.n;
+        }
+    }
+}
+
+type RequestPage = {
+    items: [any];
+};
+
+class DummyPagedRequestIterator implements AsyncIterable<RequestPage> {
+    async *[Symbol.asyncIterator]() {
+        for (let i = 0; i != 8; ++i) {
+            yield await $.ajax(`./scratch/subs${i}.json`).catch((x) => {throw JSON.stringify(x)});
         }
     }
 }
