@@ -12,17 +12,19 @@ export class Api {
 
 export class SubscriptionList implements AsyncIterable<Channel> {
     private _yt : Api;
-    private _items : PagedItemsIterator;
+    private _pager : AsyncIterable<RequestPage>
+        = new DummyPagedRequestIterator;
+
 
     constructor(yt : Api) {
-        this._items = new PagedItemsIterator;
         this._yt = yt;
     }
 
     async *[Symbol.asyncIterator]() {
-        for await (let item of this._items) {
-            yield new Channel(item.snippet.title,
-                              item.snippet.resourceId.channelId);
+        for await (let page of (this._pager)) {
+            for await (let item of (page.items as [SubscriptionItem])) {
+                yield new Channel(this._yt, item);
+            }
         }
     }
 
@@ -40,21 +42,8 @@ type SubscriptionItem = {
     };
 };
 
-class PagedItemsIterator implements AsyncIterable<SubscriptionItem> {
-    private _pager : AsyncIterable<RequestPage>
-        = new DummyPagedRequestIterator;
-
-    async *[Symbol.asyncIterator]() {
-        for await (let page of (this._pager)) {
-            for await (let item of page.items) {
-                yield item;
-            }
-        }
-    }
-}
-
 type RequestPage = {
-    items: [any];
+    items: [object];
 };
 
 class DummyPagedRequestIterator implements AsyncIterable<RequestPage> {
@@ -66,12 +55,12 @@ class DummyPagedRequestIterator implements AsyncIterable<RequestPage> {
 }
 
 export class Channel {
-    //private _yt : Api;
+    private _yt : Api;
     public title : string;
     public id : string;
-    constructor(/* yt : Api, */ title : string, id : string) {
-        //this._yt = yt;
-        this.title = title;
-        this.id = id;
+    constructor(yt : Api, json : SubscriptionItem) {
+        this._yt = yt;
+        this.title = json.snippet.title;
+        this.id = json.snippet.resourceId.channelId;
     }
 }
