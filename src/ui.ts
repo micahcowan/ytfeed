@@ -31,13 +31,13 @@ export default class App {
     private async _run() {
         let tube = this._yt;
 
-        let body = this.prependNewWidget();
+        let w = this.prependNewWidget('Subscriptions');
 
         let ul = $('<ul />');
         ul.css('border', 'solid 2px red');
-        body.append(ul);
+        w.append(ul);
 
-        let loading = $('<li><em>loading...</en></li>');
+        let loading = $('<li><span class="loading">loading...</span></li>');
         ul.append(loading);
 
         try {
@@ -50,10 +50,10 @@ export default class App {
             }
         }
         finally {
-            // Loading is finished
-            loading.slideUp(() => { loading.remove(); });
-            ul.animate({'border-color': 'rgb(255,0,0,0)' }, {duration: 1200});
         }
+        // Loading is finished
+        loading.slideUp(() => { loading.remove(); });
+        ul.animate({'border-color': 'rgb(255,0,0,0)' }, {duration: 1200});
 
         // Include a count
         let p = $('<p/>');
@@ -71,32 +71,44 @@ export default class App {
     private _addYoutubeError(x : YT.Exception) {
         let err = x.ytError.error;
         let html = $(`
-            <div class="error-widget-header">YouTube API Error</div>
             <div class="yt-error-cs">
                 <span class="yt-error-code">[${err.code}]</span>
                 <span class="yt-error-status">${err.status}</span>
             </div>
             <div class="yt-error-message">${err.message}</div>
         `);
-        let el = this.addError(html);
+        let trace = $('<div/>').appendTo(html);
+        trace.text(x.toString());
+        let el = this.addError('YouTube API Error', html);
         el.addClass('yt-error');
         return el;
     }
 
-    addError(msg : string | JQuery<HTMLElement>) : JQuery<HTMLElement> {
-        let el = this.prependNewWidget(msg, this._errsElem);
+    addError(title : string | JQuery<HTMLElement>,
+             msg : string | JQuery<HTMLElement> = '') : JQuery<HTMLElement> {
+        let el = this.prependNewWidget(title, msg, this._errsElem);
         this._errsOuter.slideDown();
         return el;
     }
 
-    prependNewWidget(contents : string | JQuery<HTMLElement> = '',
-                 container = this._widgetsElem) : JQuery<HTMLElement> {
+    prependNewWidget(
+        title : string | JQuery<HTMLElement>,
+        contents : string | JQuery<HTMLElement> = '',
+        container = this._widgetsElem
+    ) : JQuery<HTMLElement> {
         let w = $('<div/>');
         w.addClass('widget');
-        w.append(contents);
+        let titleEl = $('<div class="widget-header" />');
+        titleEl.append(title)
+        w.append(titleEl);
+        let cDiv = $('<div class="widget-contents" />');
+        cDiv.append(contents);
+        w.append(cDiv);
+
         w.hide();
         w.prependTo(container);
         w.slideDown();
+
         return w;
     }
 }

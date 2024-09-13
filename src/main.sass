@@ -45,17 +45,17 @@ body
   min-height: 1em
   background-color: #AFDCAF
 
+.widget-header
+  font-size: 1.2em
+  font-weight: bold
+  margin-bottom: 0.4em
+
 #errors-container-inner > .widget
   background-color: LightGoldenRodYellow
   border-left: solid red 0.4em
 
 #widgets-container > .widget
   border-radius: 1em
-
-.error-widget-header
-  font-size: 1.2em
-  font-weight: bold
-  margin-bottom: 0.4em
 
 .yt-error-cs
   margin-bottom: 1em
@@ -66,3 +66,18 @@ body
 .yt-error-status
   font-family: New Courier, Courier, monospace
   margin-left: 1em
+
+@keyframes loading
+  0%
+    color: rgba(128,0,0,255)
+  50%
+    color: rgba(128,0,0,0)
+  100%
+    color: rgba(128,0,0,255)
+
+.loading
+  font-weight: bold
+  font-style: italic
+  animation-name: loading
+  animation-duration: 2s
+  animation-iteration-count: infinite
