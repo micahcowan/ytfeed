@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import z from 'zod';
 
 const TESTING=1
 
@@ -12,17 +13,19 @@ export class Api {
 
 export class SubscriptionList implements AsyncIterable<Channel> {
     private _yt : Api;
-    private _pager : AsyncIterable<RequestPage>
-        = new DummyPagedRequestIterator;
-
+    private _pager : AsyncIterable<RequestPage>;
 
     constructor(yt : Api) {
         this._yt = yt;
+        this._pager = TESTING ?
+            new DummyPagedRequestIterator
+          : new DummyPagedRequestIterator;
     }
 
     async *[Symbol.asyncIterator]() {
         for await (let page of (this._pager)) {
-            for await (let item of (page.items as [SubscriptionItem])) {
+            for await (let _item of page.items) {
+                let item = SubscriptionItem.parse(_item);
                 yield new Channel(this._yt, item);
             }
         }
@@ -33,23 +36,29 @@ export class SubscriptionList implements AsyncIterable<Channel> {
     }
 }
 
-type SubscriptionItem = {
-    snippet: {
-        title: string;
-        resourceId: {
-            channelId: string;
-        }
-    };
-};
+const SubscriptionItem = z.object({
+    snippet: z.object({
+        title: z.string(),
+        resourceId: z.object({
+            channelId: z.string()
+        }),
+    }),
+});
 
-type RequestPage = {
-    items: [object];
-};
+type SubscriptionItem = z.infer<typeof SubscriptionItem>;
+
+const RequestPage = z.object({
+    items: z.array(z.unknown()),
+});
+
+type RequestPage = z.infer<typeof RequestPage>;
 
 class DummyPagedRequestIterator implements AsyncIterable<RequestPage> {
     async *[Symbol.asyncIterator]() {
         for (let i = 0; i != 8; ++i) {
-            yield await $.ajax(`./scratch/subs${i}.json`).catch((x) => {throw JSON.stringify(x)});
+            let _p = await $.ajax(`./scratch/subs${i}.json`)
+                       .catch((x) => {throw JSON.stringify(x)});
+            yield RequestPage.parse(_p);
         }
     }
 }
