@@ -65,28 +65,32 @@ export default class App {
         if (err instanceof YT.Exception) {
             console.error(err);
             this._addYoutubeError(err);
+            //throw err;
         }
     }
 
     private _addYoutubeError(x : YT.Exception) {
         let err = x.ytError.error;
         let html = $(`
+            <div>
             <div class="yt-error-cs">
                 <span class="yt-error-code">[${err.code}]</span>
                 <span class="yt-error-status">${err.status}</span>
             </div>
             <div class="yt-error-message">${err.message}</div>
+            </div>
         `);
-        let trace = $('<div/>').appendTo(html);
-        trace.text(x.toString());
+        let trace = $('<pre/>').appendTo(html);
+        trace.text(JSON.stringify(x));
         let el = this.addError('YouTube API Error', html);
-        el.addClass('yt-error');
+        el.addClass('yt-error-widget');
         return el;
     }
 
     addError(title : string | JQuery<HTMLElement>,
              msg : string | JQuery<HTMLElement> = '') : JQuery<HTMLElement> {
         let el = this.prependNewWidget(title, msg, this._errsElem);
+        el.addClass('error-widget');
         this._errsOuter.slideDown();
         return el;
     }
