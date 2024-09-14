@@ -4,7 +4,7 @@ import * as YT from './youtube';
 import "./main.sass";
 
 export default class App {
-    protected _yt : YT.Api;
+    ytApi : YT.Api;
     protected _bodyElem: JQuery<HTMLElement>;
     protected _errsOuter: JQuery<HTMLElement>;
     protected _errsElem: JQuery<HTMLElement>;
@@ -13,7 +13,7 @@ export default class App {
 
     constructor(body : JQuery<HTMLElement>, yt : YT.Api) {
         this._bodyElem = body;
-        this._yt = yt;
+        this.ytApi = yt;
 
         $('<h1>YouTube Feed App</h1>').appendTo(body);
 
@@ -40,54 +40,15 @@ export default class App {
     }
 
     run() {
-        this._run().catch((err) => this._handleError(err));
-    }
-
-    private async _run() {
-        let tube = this._yt;
-
         let p = this._params = this._getParams();
         if (p.error !== undefined) {
             this.addError('YouTube Callback Error', p.error);
         }
 
-        let widget = new Widget(this, { title: 'Subscriptions' });
-        this.prependWidget(widget);
-        let w = widget.element;
-
-        let ul = $('<ul class="subscriptions"/>');
-        ul.css('border', 'solid 2px red');
-        w.append(ul);
-
-        let loading = $('<li><span class="loading">loading...</span></li>');
-        ul.append(loading);
-
-        for await (let chan of tube.subscriptions) {
-            let li = $('<li />');
-            let t = $('<span class="subs-title" />');
-            t.text(chan.title);
-            t.appendTo(li);
-            let id = $('<span class="subs-id" />');
-            id.text(chan.id);
-            id.appendTo(li);
-            li.hide();
-            li.insertBefore(loading);
-            li.slideDown('fast');
-        }
-
-        // Loading is finished
-        ul.animate({'border-color': 'rgb(255,0,0,0)' }, {duration: 1200});
-        loading.slideUp(() => {
-            loading.remove();
-
-            // Include a count
-            let p = $('<p/>');
-            p.text(`There are ${$('li', ul).length} subscribed channels.`);
-            p.insertBefore(ul);
-        });
+        new MainWidget(this);
     }
 
-    private _handleError(err : object) {
+    handleError(err : object) {
         if (err instanceof YT.Exception) {
             console.error(err);
             this._addYoutubeError(err);
@@ -121,6 +82,14 @@ export default class App {
     }
 
     prependWidget(w : Widget, parent?: JQuery<HTMLElement>) {
+        this._insertWidget('prependTo', w, parent);
+    }
+
+    appendWidget(w : Widget, parent?: JQuery<HTMLElement>) {
+        this._insertWidget('appendTo', w, parent);
+    }
+
+    _insertWidget(op : 'prependTo' | 'appendTo', w : Widget, parent?: JQuery<HTMLElement>) {
         if (parent !== undefined) {
             // Already defined
         }
@@ -134,7 +103,7 @@ export default class App {
 
         let el = w.element;
         el.hide();
-        el.prependTo(parent);
+        el[op](parent);
         el.slideDown();
     }
 }
@@ -145,6 +114,7 @@ interface WidgetArgs {
 }
 
 export class Widget {
+    protected _app : App;
     protected _ew : JQuery<HTMLElement>;
     protected _et : JQuery<HTMLElement>;
     protected _ec : JQuery<HTMLElement>;
@@ -157,6 +127,7 @@ export class Widget {
         return this._et;
     };
     setTitle(title: string | JQuery<HTMLElement>) {
+        this._et.empty();
         if (typeof title == "string") {
             this._et.text(title);
         }
@@ -169,10 +140,12 @@ export class Widget {
         return this._ec;
     };
     setContents(contents: JQuery<HTMLElement>) {
+        this._ec.empty();
         this._ec.append(contents);
     }
 
     constructor(app: App, args?: WidgetArgs) {
+        this._app = app;
         this._ew = $('<div class="widget" />');
         this._et = $('<div class="widget-header" />').appendTo(this._ew);
         this._ec = $('<div class="widget-contents" />').appendTo(this._ew);
@@ -183,6 +156,73 @@ export class Widget {
             if (title !== undefined) this.setTitle(title);
             if (contents !== undefined) this.setContents(contents);
         }
+    }
+
+    // Generate an error handling function, suitable as an argument to
+    //  a Promise's .catch()
+    protected get errorHandler() {
+        let app = this._app;
+        return (err : object) => app.handleError(err);
+    };
+}
+
+
+export class MainWidget extends Widget {
+    protected _subs : SubscriptionsWidget;
+
+    constructor(app: App, args?: WidgetArgs) {
+        super(app, args);
+        this.setTitle('Main');
+
+        app.prependWidget(this);
+
+        let s = this._subs = new SubscriptionsWidget(app);
+    }
+}
+
+export class SubscriptionsWidget extends Widget {
+    constructor(app: App, args?: WidgetArgs) {
+        super(app, args);
+        this.setTitle('Subscriptions');
+        app.appendWidget(this);
+
+        this._asyncDoSubscriptions().catch(this.errorHandler);
+    }
+
+    private async _asyncDoSubscriptions() {
+        let tube = this._app.ytApi;
+        let w = this._ew;
+
+        let ul = $('<ul class="subscriptions"/>');
+        ul.css('border', 'solid 2px red');
+        w.append(ul);
+
+        let loading = $('<li><span class="loading">loading...</span></li>');
+        ul.append(loading);
+
+        for await (let chan of tube.subscriptions) {
+            let li = $('<li />');
+            let t = $('<span class="subs-title" />');
+            t.text(chan.title);
+            t.appendTo(li);
+            let id = $('<span class="subs-id" />');
+            id.text(chan.id);
+            id.appendTo(li);
+            li.hide();
+            li.insertBefore(loading);
+            li.slideDown('fast');
+        }
+
+        // Loading is finished
+        ul.animate({'border-color': 'rgb(255,0,0,0)' }, {duration: 1200});
+        loading.slideUp(() => {
+            loading.remove();
+
+            // Include a count
+            let p = $('<p/>');
+            p.text(`There are ${$('li', ul).length} subscribed channels.`);
+            p.insertBefore(ul);
+        });
     }
 }
 
