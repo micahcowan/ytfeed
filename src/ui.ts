@@ -35,32 +35,36 @@ export default class App {
         this.prependWidget(widget);
         let w = widget.element;
 
-        let ul = $('<ul />');
+        let ul = $('<ul class="subscriptions"/>');
         ul.css('border', 'solid 2px red');
         w.append(ul);
 
         let loading = $('<li><span class="loading">loading...</span></li>');
         ul.append(loading);
 
-        try {
-            for await (let chan of tube.subscriptions) {
-                let li = $('<li />');
-                li.text(`${chan.title} (${chan.id})`);
-                li.hide();
-                li.insertBefore(loading);
-                li.slideDown('fast');
-            }
+        for await (let chan of tube.subscriptions) {
+            let li = $('<li />');
+            let t = $('<span class="subs-title" />');
+            t.text(chan.title);
+            t.appendTo(li);
+            let id = $('<span class="subs-id" />');
+            id.text(chan.id);
+            id.appendTo(li);
+            li.hide();
+            li.insertBefore(loading);
+            li.slideDown('fast');
         }
-        finally {
-        }
-        // Loading is finished
-        loading.slideUp(() => { loading.remove(); });
-        ul.animate({'border-color': 'rgb(255,0,0,0)' }, {duration: 1200});
 
-        // Include a count
-        let p = $('<p/>');
-        p.text(`There are ${$('li', ul).length} subscribed channels.`);
-        p.insertBefore(ul);
+        // Loading is finished
+        ul.animate({'border-color': 'rgb(255,0,0,0)' }, {duration: 1200});
+        loading.slideUp(() => {
+            loading.remove();
+
+            // Include a count
+            let p = $('<p/>');
+            p.text(`There are ${$('li', ul).length} subscribed channels.`);
+            p.insertBefore(ul);
+        });
     }
 
     private _handleError(err : object) {
