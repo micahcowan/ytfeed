@@ -57,9 +57,6 @@ export class SubscriptionList implements AsyncIterable<Channel> {
     }
 
     async *[Symbol.asyncIterator]() {
-        let err = await $.ajax('./scratch/error.json') as Error;
-        err = Error.parse(err);
-        throw new Exception(err);
         for await (let page of (this._pager)) {
             for await (let _item of page.items) {
                 let item = SubscriptionItem.parse(_item);

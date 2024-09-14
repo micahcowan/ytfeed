@@ -69,6 +69,10 @@ export default class App {
             this._addYoutubeError(err);
             //throw err;
         }
+        else if (err instanceof window.Error) {
+            console.error(err);
+            this.addError('Exception caught', err.message, JSON.stringify(err));
+        }
     }
 
     private _addYoutubeError(x : YT.Exception) {
@@ -84,8 +88,10 @@ export default class App {
     }
 
     addError(title : string | JQuery<HTMLElement>,
-             msg : string = '') {
-        let w = new ErrorWidget(this, {title: title, message: msg});
+             msg : string = '', raw? : string) {
+        let wArgs : ErrorWidgetArgs = {title: title, message: msg};
+        if (raw !== undefined) wArgs.raw = raw;
+        let w = new ErrorWidget(this, wArgs);
         let el = this.prependWidget(w);
         return el;
     }
