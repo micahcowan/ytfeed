@@ -48,7 +48,7 @@ export default class App {
         new MainWidget(this);
     }
 
-    handleError(err : object) {
+    handleError(err : any) {
         if (err instanceof YT.Exception) {
             console.error(err);
             this._addYoutubeError(err);
@@ -57,6 +57,15 @@ export default class App {
         else if (err instanceof window.Error) {
             console.error(err);
             this.addError('Exception caught', err.message, JSON.stringify(err));
+        }
+        else if (typeof(err) === 'string') {
+            console.error("Caught string: ${err}");
+            this.addError('Exception caught (thrown string)', err);
+        }
+        else {
+            console.error(err);
+            this.addError('Exception caught', 'Exception of unknown type',
+                          JSON.stringify(err));
         }
     }
 
@@ -162,7 +171,7 @@ export class Widget {
     //  a Promise's .catch()
     protected get errorHandler() {
         let app = this._app;
-        return (err : object) => app.handleError(err);
+        return (err : any) => app.handleError(err);
     };
 }
 
