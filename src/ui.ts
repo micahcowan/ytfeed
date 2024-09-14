@@ -31,7 +31,9 @@ export default class App {
     private async _run() {
         let tube = this._yt;
 
-        let w = this.prependNewWidget('Subscriptions');
+        let widget = new Widget(this, { title: 'Subscriptions' });
+        this.prependWidget(widget);
+        let w = widget.element;
 
         let ul = $('<ul />');
         ul.css('border', 'solid 2px red');
@@ -71,48 +73,163 @@ export default class App {
 
     private _addYoutubeError(x : YT.Exception) {
         let err = x.ytError.error;
-        let html = $(`
-            <div>
-            <div class="yt-error-cs">
-                <span class="yt-error-code">[${err.code}]</span>
-                <span class="yt-error-status">${err.status}</span>
-            </div>
-            <div class="yt-error-message">${err.message}</div>
-            </div>
-        `);
-        let trace = $('<pre/>').appendTo(html);
-        trace.text(JSON.stringify(x));
-        let el = this.addError('YouTube API Error', html);
-        el.addClass('yt-error-widget');
-        return el;
+        let w = new YtErrorWidget(this, {
+            title: 'YouTube API Error',
+            message: err.message,
+            ytCode: err.code,
+            ytStatus: err.status,
+            raw: JSON.stringify(x),
+        });
+        this.prependWidget(w);
     }
 
     addError(title : string | JQuery<HTMLElement>,
-             msg : string | JQuery<HTMLElement> = '') : JQuery<HTMLElement> {
-        let el = this.prependNewWidget(title, msg, this._errsElem);
-        el.addClass('error-widget');
-        this._errsOuter.slideDown();
+             msg : string = '') {
+        let w = new ErrorWidget(this, {title: title, message: msg});
+        let el = this.prependWidget(w);
         return el;
     }
 
-    prependNewWidget(
-        title : string | JQuery<HTMLElement>,
-        contents : string | JQuery<HTMLElement> = '',
-        container = this._widgetsElem
-    ) : JQuery<HTMLElement> {
-        let w = $('<div/>');
-        w.addClass('widget');
-        let titleEl = $('<div class="widget-header" />');
-        titleEl.append(title)
-        w.append(titleEl);
-        let cDiv = $('<div class="widget-contents" />');
-        cDiv.append(contents);
-        w.append(cDiv);
+    prependWidget(w : Widget, parent?: JQuery<HTMLElement>) {
+        if (parent !== undefined) {
+            // Already defined
+        }
+        else if (w instanceof ErrorWidget) {
+            parent = this._errsElem;
+            this._errsOuter.slideDown(); // unhide errors area
+        }
+        else {
+            parent = this._widgetsElem;
+        }
 
-        w.hide();
-        w.prependTo(container);
-        w.slideDown();
+        let el = w.element;
+        el.hide();
+        el.prependTo(parent);
+        el.slideDown();
+    }
+}
 
-        return w;
+interface WidgetArgs {
+    title?: string | JQuery<HTMLElement>,
+    contents?: JQuery<HTMLElement>
+}
+
+export class Widget {
+    protected _ew : JQuery<HTMLElement>;
+    protected _et : JQuery<HTMLElement>;
+    protected _ec : JQuery<HTMLElement>;
+
+    get element() : JQuery<HTMLElement> {
+        return this._ew;
+    }
+
+    get title() : JQuery<HTMLElement> {
+        return this._et;
+    };
+    setTitle(title: string | JQuery<HTMLElement>) {
+        if (typeof title == "string") {
+            this._et.text(title);
+        }
+        else {
+            this._et.append(title);
+        }
+    }
+
+    get contents() : JQuery<HTMLElement> {
+        return this._ec;
+    };
+    setContents(contents: JQuery<HTMLElement>) {
+        this._ec.append(contents);
+    }
+
+    constructor(app: App, args?: WidgetArgs) {
+        this._ew = $('<div class="widget" />');
+        this._et = $('<div class="widget-header" />').appendTo(this._ew);
+        this._ec = $('<div class="widget-contents" />').appendTo(this._ew);
+
+        if (args !== undefined) {
+            let { title, contents} = args;
+
+            if (title !== undefined) this.setTitle(title);
+            if (contents !== undefined) this.setContents(contents);
+        }
+    }
+}
+
+interface ErrorWidgetArgs extends WidgetArgs {
+    message: string,
+    raw?: string
+}
+
+export class ErrorWidget extends Widget {
+    protected _msgEl : JQuery<HTMLElement>;
+    protected _rawEl : JQuery<HTMLElement>;
+
+    get message() {
+        return this._msgEl.text();
+    }
+    set message(m : string) {
+        this._msgEl.text(m);
+    }
+
+    get raw() {
+        return this._rawEl.text();
+    }
+    set raw(r : string) {
+        this._rawEl.text(r);
+    }
+
+    constructor(app: App, args: ErrorWidgetArgs) {
+        super(app, args);
+
+        this._ew.addClass('error-widget');
+        this._msgEl = $('<div class="error-message" />').prependTo(this._ec);
+        this._rawEl = $('<pre/>').appendTo(this._ec);
+
+        // Set up additonal elements under contents (_ec)
+        this.message = args.message;
+        if (args.raw !== undefined) this.raw = args.raw;
+    }
+}
+
+interface YtErrorWidgetArgs extends ErrorWidgetArgs {
+    ytCode: number;
+    ytStatus: string;
+}
+
+export class YtErrorWidget extends ErrorWidget {
+    protected _ecs : JQuery<HTMLElement>;
+    protected _eCodeElem : JQuery<HTMLElement>;
+    protected _eStatElem : JQuery<HTMLElement>;
+    protected _code : number = 0;
+
+    get ytCode() {
+        return this._code;
+    }
+    set ytCode(code : number) {
+        this._code = code;
+        this._eCodeElem.text('[' + code + ']');
+    }
+
+    get ytStatus() {
+        return this._eStatElem.text();
+    }
+    set ytStatus(status : string) {
+
+        this._eStatElem.text(status);
+    }
+
+    constructor(app: App, args: YtErrorWidgetArgs) {
+        super(app, args);
+
+        this._ew.addClass('yt-error-widget');
+
+        this._ecs = $('<div class="yt-error-cs" />').prependTo(this._ec);
+        this._eCodeElem = $('<span class="yt-error-code" />')
+            .appendTo(this._ecs);
+        this.ytCode = args.ytCode;
+        this._eStatElem = $('<span class="yt-error-status" />')
+            .appendTo(this._ecs);
+        this.ytStatus = args.ytStatus;
     }
 }
