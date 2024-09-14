@@ -4,11 +4,12 @@ import * as YT from './youtube';
 import "./main.sass";
 
 export default class App {
-    private _yt : YT.Api;
-    private _bodyElem: JQuery<HTMLElement>;
-    private _errsOuter: JQuery<HTMLElement>;
-    private _errsElem: JQuery<HTMLElement>;
-    private _widgetsElem: JQuery<HTMLElement>;
+    protected _yt : YT.Api;
+    protected _bodyElem: JQuery<HTMLElement>;
+    protected _errsOuter: JQuery<HTMLElement>;
+    protected _errsElem: JQuery<HTMLElement>;
+    protected _widgetsElem: JQuery<HTMLElement>;
+    protected _params : any;
 
     constructor(body : JQuery<HTMLElement>, yt : YT.Api) {
         this._bodyElem = body;
@@ -24,12 +25,29 @@ export default class App {
         w.appendTo(this._bodyElem);
     }
 
+    // Parse query string to see if page request is coming from OAuth 2.0 server.
+    protected _getParams() : any {
+        let fragmentString = location.hash.substring(1);
+        let params : any = {};
+        let regex = /([^&=]+)=([^&]*)/g;
+        let m;
+        while (m = regex.exec(fragmentString)) {
+            params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+        }
+        return params;
+    }
+
     run() {
         this._run().catch((err) => this._handleError(err));
     }
 
     private async _run() {
         let tube = this._yt;
+
+        let p = this._params = this._getParams();
+        if (p.error !== undefined) {
+            this.addError('YouTube Callback Error', p.error);
+        }
 
         let widget = new Widget(this, { title: 'Subscriptions' });
         this.prependWidget(widget);
