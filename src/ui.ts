@@ -266,6 +266,19 @@ export class MainWidget extends Widget {
             'cacheUpdated',
             () => { this._cacheUpdated(); },
         )
+
+        let bins = $('<button>Edit Subscription Bins (JSON)</button>')
+        let listener = () => {
+            bins.removeAttr('disabled');
+        };
+        bins.appendTo(this._ec).click(
+            () => {
+                bins.attr('disabled','disabled');
+                let binsW = new BinsWidget(this._app);
+                this._app.insertAfterWidget(binsW, this.element);
+                binsW.addEventListener('close', listener);
+            }
+        );
     }
 
     _cacheUpdated() {
@@ -340,6 +353,40 @@ export class SubscriptionsWidget extends Widget {
             p.text(`There are ${$('li', ul).length} subscribed channels.`);
             p.insertBefore(ul);
         });
+    }
+}
+
+const lsBins = 'ytfeed-bins';
+export class BinsWidget extends Widget {
+    _ta : JQuery<HTMLElement>;
+    _btn : JQuery<HTMLElement>;
+
+    constructor(app: App, args?: WidgetArgs) {
+        super(app, args);
+        this.setTitle('Bins');
+
+        let ec = this._ec;
+        let ta = this._ta = $('<textarea></textarea>').appendTo(ec);
+        if (localStorage[lsBins] !== undefined) {
+            ta.val(localStorage[lsBins]);
+        }
+        let btn = this._btn = $('<button>Update</button>').appendTo(ec)
+            .click( () => {
+                let val = ta.val();
+                if (val === undefined) {
+                    val = ''
+                } else if (typeof val !== 'string') {
+                    val = val.toString();
+                }
+                try {
+                    let json = JSON.stringify(JSON.parse(val),null,2);
+                    localStorage[lsBins] = json;
+                }
+                catch(err : any) {
+                    err.message += `\nJSON: ${val}`;
+                    this.errorHandler(err);
+                }
+            });
     }
 }
 
