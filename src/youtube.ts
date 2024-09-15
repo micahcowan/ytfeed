@@ -68,7 +68,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
         }
         else {
             let cache = [];
-            let date = new Date();
+            let date = Date.now();
             for await (let page of (this._pager)) {
                 for await (let _item of page.items) {
                     let item = SubscriptionItem.parse(_item);
@@ -102,11 +102,11 @@ export class SubscriptionList implements AsyncIterable<Channel> {
     }
 
     get cached() : boolean {
-        return localStorage[lsSubsCache] !== undefined
+        return localStorage[lsSubsCache] !== undefined;
     }
 
     get cacheDate() : Date {
-        return new Date();
+        return new Date(Number(localStorage[lsSubsCacheDate]));
     }
 }
 
