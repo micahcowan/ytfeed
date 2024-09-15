@@ -18,7 +18,7 @@ export default class App {
         $('<h1>YouTube Feed App</h1>').appendTo(body);
 
         let errs = this._errsOuter = $('<div id="errors-container"/>');
-        errs.prependTo(this._bodyElem);
+        errs.appendTo(this._bodyElem);
         errs.html('<div id="errors-container-title">Errors</div>');
         this._errsElem = $('<div id="errors-container-inner"/>')
             .appendTo(errs);
