@@ -45,7 +45,7 @@ export default class App {
             this.addError('YouTube Callback Error', p.error);
         }
 
-        new MainWidget(this);
+        this.prependWidget(new MainWidget(this));
     }
 
     handleError(err : any) {
@@ -125,6 +125,7 @@ interface WidgetArgs {
 export class Widget {
     protected _app : App;
     protected _ew : JQuery<HTMLElement>;
+    protected _cb : JQuery<HTMLElement>;
     protected _et : JQuery<HTMLElement>;
     protected _ec : JQuery<HTMLElement>;
 
@@ -153,9 +154,16 @@ export class Widget {
         this._ec.append(contents);
     }
 
+    close() {
+        let ew = this._ew;
+        ew.slideUp( () => ew.remove() );
+    }
+
     constructor(app: App, args?: WidgetArgs) {
         this._app = app;
         this._ew = $('<div class="widget" />');
+        let cbp = $('<div class="widget-close-button-parent" />').appendTo(this._ew);
+        this._cb = $('<button class="widget-close-button">X</button>').appendTo(cbp);
         this._et = $('<div class="widget-header" />').appendTo(this._ew);
         this._ec = $('<div class="widget-contents" />').appendTo(this._ew);
 
@@ -165,6 +173,8 @@ export class Widget {
             if (title !== undefined) this.setTitle(title);
             if (contents !== undefined) this.setContents(contents);
         }
+
+        this._cb.click( () => this.close() );
     }
 
     // Generate an error handling function, suitable as an argument to
@@ -177,15 +187,18 @@ export class Widget {
 
 
 export class MainWidget extends Widget {
-    protected _subs : SubscriptionsWidget;
+    protected _subs? : SubscriptionsWidget;
 
     constructor(app: App, args?: WidgetArgs) {
         super(app, args);
         this.setTitle('Main');
 
-        app.prependWidget(this);
-
-        let s = this._subs = new SubscriptionsWidget(app);
+        $('<button>View Subscriptions</button>').appendTo(this._ec).click(
+            () => {
+                this._subs = new SubscriptionsWidget(app);
+                this._subs.element.insertAfter(this._ew);
+            }
+        );
     }
 }
 
@@ -193,7 +206,6 @@ export class SubscriptionsWidget extends Widget {
     constructor(app: App, args?: WidgetArgs) {
         super(app, args);
         this.setTitle('Subscriptions');
-        app.appendWidget(this);
 
         this._asyncDoSubscriptions().catch(this.errorHandler);
     }
