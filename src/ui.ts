@@ -121,10 +121,29 @@ export default class App {
     }
 }
 
-interface WidgetArgs {
+export interface WidgetArgs {
     title?: string | JQuery<HTMLElement>,
     contents?: JQuery<HTMLElement>,
     closeable?: boolean,
+}
+
+export class WidgetCloseEvent {
+    /*
+    // No! Don't make it cancellable, bc
+    // then people would handle the "removal" with cleanup,
+    // and then the removal gets cancelled afterwards? Can't work.
+
+    //protected targetWidget
+    protected preventDefault : () => void;
+
+    get cancellable() {
+        return true;
+    }
+
+    constructor(prevDfltHandler : () => void) {
+        this.preventDefault = prevDfltHandler;
+    }
+    */
 }
 
 export class Widget {
@@ -133,6 +152,7 @@ export class Widget {
     protected _cb? : JQuery<HTMLElement>;
     protected _et : JQuery<HTMLElement>;
     protected _ec : JQuery<HTMLElement>;
+    private _evListeners : ( (ev? : WidgetCloseEvent) => void )[] = [];
 
     get element() : JQuery<HTMLElement> {
         return this._ew;
@@ -160,8 +180,27 @@ export class Widget {
     }
 
     close() {
+        /*
+        let cancelled = false;
+        let fn = () => { cancelled = true; }
+        ...
+        if (cacnelled) return;
+        */
+
         let ew = this._ew;
-        ew.slideUp( () => ew.remove() );
+        let listeners = this._evListeners;
+        let ev = new WidgetCloseEvent(/*fn*/);
+        ew.slideUp(() => {
+            ew.remove();
+            for (let listener of listeners) {
+                listener(ev);
+            }
+        });
+    }
+
+    addEventListener(evType: 'close',
+                     handler: (ev? : WidgetCloseEvent) => void) {
+        this._evListeners.push(handler);
     }
 
     constructor(app: App, args?: WidgetArgs) {
@@ -200,10 +239,16 @@ export class MainWidget extends Widget {
         super(app, { closeable: false });
         this.setTitle('Main');
 
-        $('<button>View Subscriptions</button>').appendTo(this._ec).click(
+        let button = $('<button>View Subscriptions</button>');
+        let listener = () => {
+            button.removeAttr('disabled');
+        };
+        button.appendTo(this._ec).click(
             () => {
+                button.attr('disabled','disabled');
                 this._subs = new SubscriptionsWidget(app);
                 app.insertAfterWidget(this._subs, this.element);
+                this._subs.addEventListener('close', listener);
             }
         );
     }
@@ -254,7 +299,7 @@ export class SubscriptionsWidget extends Widget {
     }
 }
 
-interface ErrorWidgetArgs extends WidgetArgs {
+export interface ErrorWidgetArgs extends WidgetArgs {
     message: string,
     raw?: string
 }
@@ -290,7 +335,7 @@ export class ErrorWidget extends Widget {
     }
 }
 
-interface YtErrorWidgetArgs extends ErrorWidgetArgs {
+export interface YtErrorWidgetArgs extends ErrorWidgetArgs {
     ytCode: number;
     ytStatus: string;
 }
