@@ -123,13 +123,14 @@ export default class App {
 
 interface WidgetArgs {
     title?: string | JQuery<HTMLElement>,
-    contents?: JQuery<HTMLElement>
+    contents?: JQuery<HTMLElement>,
+    closeable?: boolean,
 }
 
 export class Widget {
     protected _app : App;
     protected _ew : JQuery<HTMLElement>;
-    protected _cb : JQuery<HTMLElement>;
+    protected _cb? : JQuery<HTMLElement>;
     protected _et : JQuery<HTMLElement>;
     protected _ec : JQuery<HTMLElement>;
 
@@ -167,7 +168,11 @@ export class Widget {
         this._app = app;
         this._ew = $('<div class="widget" />');
         let cbp = $('<div class="widget-close-button-parent" />').appendTo(this._ew);
-        this._cb = $('<button class="widget-close-button">X</button>').appendTo(cbp);
+        if (args === undefined ||args.closeable === undefined
+            || args.closeable) {
+            this._cb = $('<button class="widget-close-button">X</button>').appendTo(cbp);
+            this._cb.click( () => this.close() );
+        }
         this._et = $('<div class="widget-header" />').appendTo(this._ew);
         this._ec = $('<div class="widget-contents" />').appendTo(this._ew);
 
@@ -177,8 +182,6 @@ export class Widget {
             if (title !== undefined) this.setTitle(title);
             if (contents !== undefined) this.setContents(contents);
         }
-
-        this._cb.click( () => this.close() );
     }
 
     // Generate an error handling function, suitable as an argument to
@@ -194,7 +197,7 @@ export class MainWidget extends Widget {
     protected _subs? : SubscriptionsWidget;
 
     constructor(app: App, args?: WidgetArgs) {
-        super(app, args);
+        super(app, { closeable: false });
         this.setTitle('Main');
 
         $('<button>View Subscriptions</button>').appendTo(this._ec).click(
@@ -207,8 +210,8 @@ export class MainWidget extends Widget {
 }
 
 export class SubscriptionsWidget extends Widget {
-    constructor(app: App, args?: WidgetArgs) {
-        super(app, args);
+    constructor(app: App) {
+        super(app);
         this.setTitle('Subscriptions');
 
         this._asyncDoSubscriptions().catch(this.errorHandler);
