@@ -98,7 +98,11 @@ export default class App {
         this._insertWidget('appendTo', w, parent);
     }
 
-    _insertWidget(op : 'prependTo' | 'appendTo', w : Widget, parent?: JQuery<HTMLElement>) {
+    insertAfterWidget(w : Widget, target?: JQuery<HTMLElement>) {
+        this._insertWidget('insertAfter', w, target);
+    }
+
+    _insertWidget(op : 'prependTo' | 'appendTo' | 'insertAfter', w : Widget, parent?: JQuery<HTMLElement>) {
         if (parent !== undefined) {
             // Already defined
         }
@@ -196,7 +200,7 @@ export class MainWidget extends Widget {
         $('<button>View Subscriptions</button>').appendTo(this._ec).click(
             () => {
                 this._subs = new SubscriptionsWidget(app);
-                this._subs.element.insertAfter(this._ew);
+                app.insertAfterWidget(this._subs, this.element);
             }
         );
     }
