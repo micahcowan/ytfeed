@@ -45,6 +45,8 @@ export class Api {
     }
 };
 
+const lsSubsCache = 'ytfeed-subs-cache';
+const lsSubsCacheDate = 'ytfeed-subs-cache-date';
 export class SubscriptionList implements AsyncIterable<Channel> {
     private _yt : Api;
     private _pager : AsyncIterable<RequestPage>;
@@ -57,19 +59,39 @@ export class SubscriptionList implements AsyncIterable<Channel> {
     }
 
     async *[Symbol.asyncIterator]() {
-        for await (let page of (this._pager)) {
-            for await (let _item of page.items) {
-                let item = SubscriptionItem.parse(_item);
+        if (this.cached) {
+            let cache = localStorage[lsSubsCache];
+            for (let item of cache) {
                 yield new Channel(this._yt, item);
             }
+        }
+        else {
+            let cache = [];
+            let date = new Date();
+            for await (let page of (this._pager)) {
+                for await (let _item of page.items) {
+                    let item = SubscriptionItem.parse(_item);
+                    cache.push(item);
+                    yield new Channel(this._yt, item);
+                }
+            }
+            localStorage[lsSubsCache] = cache;
+            localStorage[lsSubsCacheDate] = date;
         }
     }
 
     getAsyncIter() {
         return this[Symbol.asyncIterator]();
     }
-}
 
+    get cached() : boolean {
+        return localStorage[lsSubsCache] !== undefined
+    }
+
+    get cacheDate() : Date {
+        return new Date();
+    }
+}
 
 class DummyPagedRequestIterator implements AsyncIterable<RequestPage> {
     async *[Symbol.asyncIterator]() {

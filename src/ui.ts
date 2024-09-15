@@ -243,6 +243,27 @@ export class MainWidget extends Widget {
         super(app, { closeable: false });
         this.setTitle('Main');
 
+        this._doSubsCache();
+        this._doSubsView();
+    }
+
+    _doSubsCache() {
+        let ec = this._ec;
+        let tube = this._app.ytApi;
+
+        $('<div class="widget-section-heading">Cached data</div>').appendTo(ec);
+        let p = $('<div></div>').appendTo(ec);
+        if (tube.subscriptions.cached) {
+            p.text('Subscriptions data was cached on '
+                   + tube.subscriptions.cacheDate);
+        }
+        else {
+            p.text('Subscriptions data is NOT cached.')
+        }
+    }
+
+    _doSubsView() {
+        let app = this._app;
         let button = $('<button>View Subscriptions</button>');
         let listener = () => {
             button.removeAttr('disabled');
