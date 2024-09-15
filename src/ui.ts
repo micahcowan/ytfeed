@@ -268,7 +268,7 @@ export class SubscriptionsWidget extends Widget {
 
     private async _asyncDoSubscriptions() {
         let tube = this._app.ytApi;
-        let w = this._ew;
+        let w = this._ec;
 
         let ul = $('<ul class="subscriptions"/>');
         ul.css('border', 'solid 2px red');
