@@ -204,6 +204,21 @@ export class Widget {
         this._evListeners.push(handler);
     }
 
+    makeSingleSpawner(button : JQuery<HTMLElement>,
+                      makeFn : () => Widget) {
+        let listener = () => {
+            button.removeAttr('disabled');
+        };
+        button.click(
+            () => {
+                button.attr('disabled','disabled');
+                let subW = makeFn();
+                this._app.insertAfterWidget(subW, this.element);
+                subW.addEventListener('close', listener);
+            }
+        );
+    }
+
     constructor(app: App, args?: WidgetArgs) {
         this._app = app;
         this._ew = $('<div class="widget" />');
@@ -268,17 +283,8 @@ export class MainWidget extends Widget {
         )
 
         let bins = $('<button>Edit Subscription Bins (JSON)</button>')
-        let listener = () => {
-            bins.removeAttr('disabled');
-        };
-        bins.appendTo(this._ec).click(
-            () => {
-                bins.attr('disabled','disabled');
-                let binsW = new BinsWidget(this._app);
-                this._app.insertAfterWidget(binsW, this.element);
-                binsW.addEventListener('close', listener);
-            }
-        );
+            .appendTo(this._ec);
+        this.makeSingleSpawner(bins, () => new BinsWidget(this._app));
     }
 
     _cacheUpdated() {
@@ -296,18 +302,9 @@ export class MainWidget extends Widget {
 
     _doSubsView() {
         let app = this._app;
-        let button = $('<button>View Subscriptions</button>');
-        let listener = () => {
-            button.removeAttr('disabled');
-        };
-        button.appendTo(this._ec).click(
-            () => {
-                button.attr('disabled','disabled');
-                this._subs = new SubscriptionsWidget(app);
-                app.insertAfterWidget(this._subs, this.element);
-                this._subs.addEventListener('close', listener);
-            }
-        );
+        let button = $('<button>View Subscriptions</button>')
+            .appendTo(this._ec);
+        this.makeSingleSpawner(button, () => new SubscriptionsWidget(app));
     }
 }
 
