@@ -57,21 +57,22 @@ h1
   min-height: 1rem
   background-color: #AFDCAF
 
-.widget-close-button-parent
-  position: absolute
-  width: 100%
-  text-align: right
+summary.widget-top
+  white-space: nowrap
 
-.widget-close-button
-  position: relative
-  z-index: 1
-  margin-left: auto
-  margin-right: 2rem
+.widget-header-parent
+  display: inline-flex
+  justify-content: space-between
+  margin-right: 0
+  width: 100%
 
 .widget-header
   font-size: 1.2rem
   font-weight: bold
   margin-bottom: 0.4rem
+
+.widget-close-button
+  margin-right: 1rem
 
 #errors-container-inner > .widget
   background-color: LightGoldenRodYellow
@@ -82,7 +83,7 @@ h1
 
 .error-widget pre
   background-color: #ffe
-  x-overflow: auto
+  overflow-x: auto
   white-space: pre-wrap
   padding: 0.5rem
 

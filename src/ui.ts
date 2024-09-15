@@ -150,6 +150,7 @@ export class Widget {
     protected _app : App;
     protected _ew : JQuery<HTMLElement>;
     protected _cb? : JQuery<HTMLElement>;
+    protected _sum : JQuery<HTMLElement>;
     protected _et : JQuery<HTMLElement>;
     protected _ec : JQuery<HTMLElement>;
     private _evListeners : ( (ev? : WidgetCloseEvent) => void )[] = [];
@@ -206,14 +207,17 @@ export class Widget {
     constructor(app: App, args?: WidgetArgs) {
         this._app = app;
         this._ew = $('<div class="widget" />');
-        let cbp = $('<div class="widget-close-button-parent" />').appendTo(this._ew);
+        let dt = $('<details open="open"></details>').appendTo(this._ew);
+        this._sum = $('<summary class="widget-top"></summary>').appendTo(dt);
+        let whp = $('<div class="widget-header-parent"></div>').appendTo(this._sum);
+        this._et = $('<span class="widget-header"></span>').appendTo(whp);
+        //let cbp = $('<div class="widget-close-button-parent" />').appendTo(this._ew);
         if (args === undefined ||args.closeable === undefined
             || args.closeable) {
-            this._cb = $('<button class="widget-close-button">X</button>').appendTo(cbp);
+            this._cb = $('<button class="widget-close-button">X</button>').appendTo(whp);
             this._cb.click( () => this.close() );
         }
-        this._et = $('<div class="widget-header" />').appendTo(this._ew);
-        this._ec = $('<div class="widget-contents" />').appendTo(this._ew);
+        this._ec = $('<div class="widget-contents" />').appendTo(dt);
 
         if (args !== undefined) {
             let { title, contents} = args;
