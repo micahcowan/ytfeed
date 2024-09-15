@@ -209,8 +209,8 @@ export class Widget {
         this._ew = $('<div class="widget" />');
         let dt = $('<details open="open"></details>').appendTo(this._ew);
         this._sum = $('<summary class="widget-top"></summary>').appendTo(dt);
-        let whp = $('<div class="widget-header-parent"></div>').appendTo(this._sum);
-        this._et = $('<span class="widget-header"></span>').appendTo(whp);
+        let whp = $('<div class="widget-heading-parent"></div>').appendTo(this._sum);
+        this._et = $('<span class="widget-heading"></span>').appendTo(whp);
         //let cbp = $('<div class="widget-close-button-parent" />').appendTo(this._ew);
         if (args === undefined ||args.closeable === undefined
             || args.closeable) {

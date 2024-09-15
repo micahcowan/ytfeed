@@ -50,6 +50,13 @@ h1
   margin: 0
   padding: 0
 
+#errors-container-inner > .widget
+  background-color: LightGoldenRodYellow
+  border-left: solid red 0.4rem
+
+#widgets-container .widget
+  border-radius: 1rem
+
 .widget
   position: relative
   margin: 0.5rem
@@ -60,13 +67,13 @@ h1
 summary.widget-top
   white-space: nowrap
 
-.widget-header-parent
+.widget-heading-parent
   display: inline-flex
   justify-content: space-between
   margin-right: 0
   width: 100%
 
-.widget-header
+.widget-heading
   white-space: wrap
   font-size: 1.2rem
   font-weight: bold
@@ -75,12 +82,6 @@ summary.widget-top
 .widget-close-button
   margin-right: 1rem
 
-#errors-container-inner > .widget
-  background-color: LightGoldenRodYellow
-  border-left: solid red 0.4rem
-
-#widgets-container > .widget
-  border-radius: 1rem
 
 .error-widget pre
   background-color: #ffe
