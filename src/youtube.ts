@@ -50,6 +50,7 @@ const lsSubsCacheDate = 'ytfeed-subs-cache-date';
 export class SubscriptionList implements AsyncIterable<Channel> {
     private _yt : Api;
     private _pager : AsyncIterable<RequestPage>;
+    private _listeners : (() => void)[] = [];
 
     constructor(yt : Api) {
         this._yt = yt;
@@ -60,7 +61,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
 
     async *[Symbol.asyncIterator]() {
         if (this.cached) {
-            let cache = localStorage[lsSubsCache];
+            let cache = JSON.parse(localStorage[lsSubsCache]);
             for (let item of cache) {
                 yield new Channel(this._yt, item);
             }
@@ -75,13 +76,29 @@ export class SubscriptionList implements AsyncIterable<Channel> {
                     yield new Channel(this._yt, item);
                 }
             }
-            localStorage[lsSubsCache] = cache;
+            localStorage[lsSubsCache] = JSON.stringify(cache);
             localStorage[lsSubsCacheDate] = date;
+            this._fireUpdated();
         }
+    }
+
+    private _fireUpdated() {
+        for (let li of this._listeners) {
+            li();
+        }
+    }
+
+    addEventListener(kind : 'cacheUpdated', handler : () => void) {
+        this._listeners.push(handler);
     }
 
     getAsyncIter() {
         return this[Symbol.asyncIterator]();
+    }
+
+    invalidateCache() {
+        delete localStorage[lsSubsCache];
+        this._fireUpdated();
     }
 
     get cached() : boolean {
