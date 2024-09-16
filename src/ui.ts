@@ -1,7 +1,11 @@
 import $ from 'jquery';
+import z from 'zod';
 import 'jquery-color';
+
 import * as YT from './youtube';
 import "./main.sass";
+
+const lsBins = 'ytfeed-bins';
 
 export default class App {
     ytApi : YT.Api;
@@ -119,7 +123,51 @@ export default class App {
         el[op](parent);
         el.slideDown();
     }
+
+    getAssignedBins() : BinAssignments {
+        // Process user-provided bins assignments, which are organized
+        // by bin, to produce an organization by channel, eached
+        // mapped to an object whose keys are bin ids.
+        let val : BinAssignments = {};
+        let ls = localStorage[lsBins];
+        if (ls === undefined)
+            return val;
+        let bins = BinsStruct.parse(JSON.parse(ls));
+        for (let binName in bins.bins) {
+            let bin = bins.bins[binName];
+            for (let chanKey in bin) {
+                let chan = bin[chanKey];
+                if (!(chan.id in val)) {
+                    val[chan.id] = {
+                        name: chan.name,
+                        bins: new Set<string>
+                    }
+                }
+                val[chan.id].bins.add(binName);
+            }
+        }
+        return val;
+    }
 }
+
+const BinsStruct = z.object({
+    "pl-names": z.record(z.string(), z.string()),
+    "bins": z.record(
+        z.string(),
+        z.array(
+            z.object({
+                'id': z.string(),
+                'name': z.string(),
+            })
+        ),
+    ),
+});
+type BinsStruct = z.infer<typeof BinsStruct>;
+
+type BinAssignments = Record<string, {
+    name: string,
+    bins: Set<string>
+}>;
 
 export interface WidgetArgs {
     title?: string | JQuery<HTMLElement>,
@@ -252,7 +300,6 @@ export class Widget {
 
 
 export class MainWidget extends Widget {
-    protected _subs? : SubscriptionsWidget;
     private _cacheP : JQuery<HTMLElement>;
 
     constructor(app: App, args?: WidgetArgs) {
@@ -320,13 +367,22 @@ export class SubscriptionsWidget extends Widget {
         let tube = this._app.ytApi;
         let w = this._ec;
 
-        let ul = $('<ul class="subscriptions"/>');
-        ul.css('border', 'solid 2px red');
-        w.append(ul);
+        let loading = $('<div class="loading">loading...</div>');
+        w.append(loading);
 
-        let loading = $('<li><span class="loading">loading...</span></li>');
-        ul.append(loading);
+        let x;
+        x = $('<details open="open"><summary>UNKNOWN subscriptions</summary></details>')
+            .appendTo(w);
+        let unkSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
+        x = $('<details open="open"><summary>IGNORED subscriptions</summary></details>')
+            .appendTo(w);
+        let ignSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
+        x = $('<details><summary>ALL subscriptions</summary></details>')
+            .appendTo(w);
+        let allSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
 
+        let assign = this._app.getAssignedBins();
+        console.log(assign)
         for await (let chan of tube.subscriptions) {
             let li = $('<li />');
             let t = $('<span class="subs-title" />');
@@ -336,24 +392,28 @@ export class SubscriptionsWidget extends Widget {
             id.text(chan.id);
             id.appendTo(li);
             li.hide();
-            li.insertBefore(loading);
+            li.appendTo(allSubsUl);
             li.slideDown('fast');
+
+            let a = assign[chan.id];
+            if (a === undefined) {
+                li.clone().appendTo(unkSubsUl);
+            }
+            else if (a.bins.has('IGNORE')) {
+                li.clone().appendTo(ignSubsUl);
+            }
         }
 
         // Loading is finished
-        ul.animate({'border-color': 'rgb(255,0,0,0)' }, {duration: 1200});
-        loading.slideUp(() => {
-            loading.remove();
+        // Include a count
+        let p = $('<p/>');
+        p.text(`There are ${$('li', allSubsUl).length} subscribed channels.`);
+        p.insertBefore(loading);
 
-            // Include a count
-            let p = $('<p/>');
-            p.text(`There are ${$('li', ul).length} subscribed channels.`);
-            p.insertBefore(ul);
-        });
+        loading.remove();
     }
 }
 
-const lsBins = 'ytfeed-bins';
 export class BinsWidget extends Widget {
     _ta : JQuery<HTMLElement>;
     _btn : JQuery<HTMLElement>;
