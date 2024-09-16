@@ -1,6 +1,6 @@
 import $ from 'jquery'
 
-import { App } from './ui'
+import { App } from './app'
 import { Widget, WidgetArgs } from './widget'
 
 export interface ErrorWidgetArgs extends WidgetArgs {

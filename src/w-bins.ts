@@ -1,6 +1,6 @@
 import $ from 'jquery'
 
-import { App } from './ui'
+import { App } from './app'
 import { WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
 import * as YT from './youtube'
