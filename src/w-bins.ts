@@ -44,6 +44,7 @@ export class BinsEditWidget extends AppWidget {
 type JQE = JQuery<HTMLElement>;
 export class BinsViewWidget extends AppWidget {
     _binEls : Record<string, {count: JQE, ul: JQE}> = {};
+    _binNames : Record<string, string>;
 
     constructor(app: App, args?: WidgetArgs) {
         super(app, args);
@@ -52,7 +53,7 @@ export class BinsViewWidget extends AppWidget {
         let ec = this._ec;
         let binStruct = BinsStruct.parse(JSON.parse(localStorage[lsBins]))
         let bins = binStruct.bins;
-        let binNames = binStruct['pl-names'];
+        let binNames = this._binNames = binStruct['pl-names'];
 
         let loading = $('<div class="loading">loading...</div>');
         ec.append(loading);
@@ -111,6 +112,9 @@ export class BinsViewWidget extends AppWidget {
                         let title = item.snippet.videoOwnerChannelTitle;
                         if (title !== undefined) {
                             chan.text(title);
+                        }
+                        else {
+                            console.log(`Video doesn't have owner! ${item.snippet.title} in bin ${this._binNames[bin]}`)
                         }
 
                         ++c;
