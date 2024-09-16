@@ -104,7 +104,6 @@ export class Api {
         let token = await this._getToken();
 
         let url = `${this.basePath}/${args.path}?${encodeParams(args.params)}`
-        console.log(`Url is: ${url}`);
         let requestPromise = $.ajax({
             url: url,
             method: method,

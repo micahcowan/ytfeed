@@ -426,7 +426,8 @@ export class SubscriptionsWidget extends Widget {
         // Loading is finished
         // Include a count
         let p = $('<p/>');
-        p.text(`There are ${$('li', allSubsUl).length} subscribed channels.`);
+        p.text(`There are ${$('li', allSubsUl).length} subscribed channels:
+               ${$('li', unkSubsUl).length} unknown, and ${$('li', ignSubsUl).length} ignored.`);
         p.insertBefore(loading);
 
         loading.remove();
