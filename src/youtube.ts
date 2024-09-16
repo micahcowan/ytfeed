@@ -111,18 +111,14 @@ export class Api {
             headers: {
                 'Authorization': `Bearer ${token}`,
             },
-            error:  (jqXHR) => {
-                let ex =  new Exception(Error.parse(jqXHR.responseJSON));
-                if (this.errorHandler !== undefined) {
-                    this.errorHandler(ex);
-                }
-                else {
-                    //throw ex;
-                }
-            }
         });
 
-        return await requestPromise;
+        try {
+            return await requestPromise;
+        } catch(jqXHR : any) {
+            let ex =  new Exception(Error.parse(jqXHR.responseJSON));
+            throw ex;
+        }
     }
 
     async getRequest(args: RequestArgs) : Promise<object> {
