@@ -51,6 +51,12 @@ export default class App {
             this.addError('YouTube Callback Error', p.error);
         }
         this.ytApi.handleParams(p);
+        // Now remove the params from user view
+        if (location.hash.length > 1) {
+            console.log("Removing URL hash!");
+            console.log(`Original URL: ${location.href}`);
+            location.hash = '#';
+        }
 
         this.prependWidget(new MainWidget(this));
     }
