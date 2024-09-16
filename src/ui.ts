@@ -358,11 +358,12 @@ export class MainWidget extends Widget {
 
     _doSubsView() {
         let app = this._app;
+        $('<div class="widget-section-heading">Subscriptions</div>').appendTo(this._ec);
         let button = $('<button>View Subscriptions</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(button, () => new SubscriptionsWidget(app));
 
-        let update = $('<button>View Subscriptions (Updated)</button>')
+        let update = $('<button>View Subscriptions (<strong>Updated</strong>)</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(update, () => new SubscriptionsWidget(app, 'update'));
     }
