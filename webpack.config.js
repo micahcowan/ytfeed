@@ -34,4 +34,5 @@ module.exports = {
             filename: 'main.css',
         }),
     ],
+    devtool: 'eval-source-map',
 };
