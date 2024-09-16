@@ -1,8 +1,14 @@
 import $ from 'jquery';
 import z from 'zod';
 
-const TESTING=1
+const TESTING=false
 
+const lsSubsCache = 'ytfeed-subs-cache';
+const lsSubsCacheDate = 'ytfeed-subs-cache-date';
+const lsToken = 'ytfeed-acess-token';
+const lsTokenExpire = 'ytfeed-acess-token-expire-ms';
+
+//-------------------- ZOD types --------------------
 export const Suberror = z.object({
     message: z.string(),
     domain: z.string(),
@@ -14,7 +20,7 @@ export const Error = z.object({
     error: z.object({
         code: z.number(),
         message: z.string(),
-        status: z.string(),
+        status: z.optional( z.string() ),
         errors: z.array( Suberror ),
     }),
 });
@@ -32,21 +38,106 @@ export const SubscriptionItem = z.object({
 export type SubscriptionItem = z.infer<typeof SubscriptionItem>;
 
 export const RequestPage = z.object({
+    nextPageToken: z.optional( z.string() ),
     items: z.array(z.unknown()),
 });
 export type RequestPage = z.infer<typeof RequestPage>;
 
+//
+type HttpMethod = 'GET' | 'POST' | 'PUT';
+interface RequestArgs {
+    path: string,
+    params: Record<string, string>;
+}
 
+//
+
+function encodeParams(params: Record<string, string>) : string {
+    let uri = '';
+    for (let key in params) {
+        if (uri != '') {
+            uri += '&';
+        }
+        let item = params[key];
+        uri += `${encodeURIComponent(key)}=${encodeURIComponent(item)}`;
+    }
+    return uri;
+}
+
+
+//-------------------- Class defs --------------------
 export class Api {
     private _subs = new SubscriptionList(this);
+    basePath = 'https://youtube.googleapis.com/youtube/v3';
+    errorHandler? : (ev : any) => void;
 
     get subscriptions() {
         return this._subs;
     }
+
+    async _getToken() : Promise<string> {
+        if (localStorage[lsToken] === undefined
+                || Number(localStorage[lsTokenExpire]) <= Date.now()) {
+            await this._refreshToken();
+        }
+        return localStorage[lsToken];
+    }
+
+    async _refreshToken() {
+        let secret = await $.ajax('./scratch/client-secret.json');
+        let params : Record<string, string> = {
+            client_id: secret.web.client_id,
+            redirect_uri: location.origin + location.pathname,
+            response_type: "token",
+            scope: 'https://www.googleapis.com/auth/youtube',
+            // FIXME: use the state param to avoid redirect attacks!
+        };
+
+        // Encode the params
+        let uri = encodeParams(params);
+        uri = 'https://accounts.google.com/o/oauth2/v2/auth?' + uri;
+        window.location.href = uri; // REDIRECT!
+    }
+
+    async doRequest(method : HttpMethod, args: RequestArgs)
+            : Promise<object> {
+        let token = await this._getToken();
+
+        let url = `${this.basePath}/${args.path}?${encodeParams(args.params)}`
+        console.log(`Url is: ${url}`);
+        let requestPromise = $.ajax({
+            url: url,
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            error:  (jqXHR) => {
+                let ex =  new Exception(Error.parse(jqXHR.responseJSON));
+                if (this.errorHandler !== undefined) {
+                    this.errorHandler(ex);
+                }
+                else {
+                    //throw ex;
+                }
+            }
+        });
+
+        return await requestPromise;
+    }
+
+    async getRequest(args: RequestArgs) : Promise<object> {
+        return this.doRequest('GET', args);
+    }
+
+    handleParams(p : Record<string, string>) {
+        if ('access_token' in p) {
+            console.log('Processing new access token!');
+            localStorage[lsToken] = p.access_token;
+            localStorage[lsTokenExpire] = Date.now() + (Number(p.expires_in) * 1000);
+        }
+    }
 };
 
-const lsSubsCache = 'ytfeed-subs-cache';
-const lsSubsCacheDate = 'ytfeed-subs-cache-date';
 export class SubscriptionList implements AsyncIterable<Channel> {
     private _yt : Api;
     private _pager : AsyncIterable<RequestPage>;
@@ -56,7 +147,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
         this._yt = yt;
         this._pager = TESTING ?
             new DummyPagedRequestIterator
-          : new DummyPagedRequestIterator;
+          : new PagedRequestIterator(yt);
     }
 
     async *[Symbol.asyncIterator]() {
@@ -67,18 +158,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
             }
         }
         else {
-            let cache = [];
-            let date = Date.now();
-            for await (let page of (this._pager)) {
-                for await (let _item of page.items) {
-                    let item = SubscriptionItem.parse(_item);
-                    cache.push(item);
-                    yield new Channel(this._yt, item);
-                }
-            }
-            localStorage[lsSubsCache] = JSON.stringify(cache);
-            localStorage[lsSubsCacheDate] = date;
-            this._fireUpdated();
+            return this.getAsyncUpdatedIterator();
         }
     }
 
@@ -94,6 +174,21 @@ export class SubscriptionList implements AsyncIterable<Channel> {
 
     getAsyncIter() {
         return this[Symbol.asyncIterator]();
+    }
+
+    async *getAsyncUpdatedIterator() {
+        let cache = [];
+        let date = Date.now();
+        for await (let page of (this._pager)) {
+            for await (let _item of page.items) {
+                let item = SubscriptionItem.parse(_item);
+                cache.push(item);
+                yield new Channel(this._yt, item);
+            }
+        }
+        localStorage[lsSubsCache] = JSON.stringify(cache);
+        localStorage[lsSubsCacheDate] = date;
+        this._fireUpdated();
     }
 
     invalidateCache() {
@@ -120,6 +215,33 @@ class DummyPagedRequestIterator implements AsyncIterable<RequestPage> {
     }
 }
 
+class PagedRequestIterator implements AsyncIterable<RequestPage> {
+    private _yt : Api;
+
+    async *[Symbol.asyncIterator]() {
+        let yt = this._yt;
+        let nextPage : undefined | string;
+        let params : any = {
+            path: 'subscriptions',
+            params: {
+                mine: "true",
+                part: "snippet",
+            },
+        };
+        do {
+            let response = await yt.getRequest(params);
+            let parsed =  RequestPage.parse(response);
+            yield parsed;
+            nextPage = parsed.nextPageToken;
+            params.params.pageToken = nextPage;
+        } while (nextPage !== undefined);
+    }
+
+    constructor(yt : Api) {
+        this._yt = yt;
+    }
+}
+
 export class Channel {
     private _yt : Api;
     public title : string;
@@ -133,7 +255,6 @@ export class Channel {
 
 export class Exception extends window.Error {
     ytError : Error;
-    ytHtml : any;
 
     constructor(obj : Error) {
         let err = obj.error;

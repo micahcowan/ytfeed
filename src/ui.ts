@@ -19,6 +19,8 @@ export default class App {
         this._bodyElem = body;
         this.ytApi = yt;
 
+        yt.errorHandler = (ev) => this.handleError(ev);
+
         $('<h1>YouTube Feed App</h1>').appendTo(body);
 
         let errs = this._errsOuter = $('<div id="errors-container"/>');
@@ -48,6 +50,7 @@ export default class App {
         if (p.error !== undefined) {
             this.addError('YouTube Callback Error', p.error);
         }
+        this.ytApi.handleParams(p);
 
         this.prependWidget(new MainWidget(this));
     }
@@ -60,7 +63,7 @@ export default class App {
         }
         else if (err instanceof window.Error) {
             console.error(err);
-            this.addError('Exception caught', err.message, JSON.stringify(err));
+            this.addError('Exception caught', err.message, JSON.stringify(err,null,2));
         }
         else if (typeof(err) === 'string') {
             console.error("Caught string: ${err}");
@@ -69,7 +72,7 @@ export default class App {
         else {
             console.error(err);
             this.addError('Exception caught', 'Exception of unknown type',
-                          JSON.stringify(err));
+                          JSON.stringify(err,null,2));
         }
     }
 
@@ -79,8 +82,8 @@ export default class App {
             title: 'YouTube API Error',
             message: err.message,
             ytCode: err.code,
-            ytStatus: err.status,
-            raw: JSON.stringify(x),
+            ytStatus: (err.status !== undefined)? err.status : '',
+            raw: JSON.stringify(x, null, 2),
         });
         this.prependWidget(w);
     }
@@ -352,13 +355,20 @@ export class MainWidget extends Widget {
         let button = $('<button>View Subscriptions</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(button, () => new SubscriptionsWidget(app));
+
+        let update = $('<button>View Subscriptions (Updated)</button>')
+            .appendTo(this._ec);
+        this.makeSingleSpawner(update, () => new SubscriptionsWidget(app, 'update'));
     }
 }
 
 export class SubscriptionsWidget extends Widget {
-    constructor(app: App) {
+    _update : boolean;
+
+    constructor(app: App, update? : 'update') {
         super(app);
         this.setTitle('Subscriptions');
+        this._update = update === 'update';
 
         this._asyncDoSubscriptions().catch(this.errorHandler);
     }
@@ -382,8 +392,11 @@ export class SubscriptionsWidget extends Widget {
         let allSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
 
         let assign = this._app.getAssignedBins();
-        console.log(assign)
-        for await (let chan of tube.subscriptions) {
+        let iter : AsyncIterable<YT.Channel> = tube.subscriptions;
+        if (this._update) {
+            iter = tube.subscriptions.getAsyncUpdatedIterator();
+        }
+        for await (let chan of iter) {
             let li = $('<li />');
             let t = $('<span class="subs-title" />');
             t.text(chan.title);
