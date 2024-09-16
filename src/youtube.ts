@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import z from 'zod';
+import { z, ZodError } from 'zod';
 
 const TESTING=false
 
@@ -116,8 +116,24 @@ export class Api {
         try {
             return await requestPromise;
         } catch(jqXHR : any) {
-            let ex =  new Exception(Error.parse(jqXHR.responseJSON));
-            throw ex;
+            let parsed = Error.safeParse(jqXHR.responseJSON);
+            //let parsed : any = Error.safeParse(jqXHR.responseJSON);
+            if (parsed.success === false) {
+                throw jqXHR; // dunno what it was: rethrow
+            }
+            else {
+                // Must be a YouTube error
+                // Is it an authentication problem?
+                if (parsed.data.error.code == 401) {
+                    await this._refreshToken();
+                    // Never returns!
+                }
+
+                // Other unknown YouTube error, so rethrow it as
+                // our special YouTube Exception class
+                let ex =  new Exception(Error.parse(jqXHR.responseJSON));
+                throw ex;
+            }
         }
     }
 
