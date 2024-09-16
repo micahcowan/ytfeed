@@ -222,6 +222,7 @@ class PagedRequestIterator implements AsyncIterable<RequestPage> {
             params: {
                 mine: "true",
                 part: "snippet",
+                maxResults: "50",
             },
         };
         do {
