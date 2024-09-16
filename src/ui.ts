@@ -204,7 +204,6 @@ export class WidgetCloseEvent {
 }
 
 export class Widget {
-    protected _app : App;
     protected _ew : JQuery<HTMLElement>;
     protected _cb? : JQuery<HTMLElement>;
     protected _sum : JQuery<HTMLElement>;
@@ -261,8 +260,8 @@ export class Widget {
         this._evListeners.push(handler);
     }
 
-    makeSingleSpawner(button : JQuery<HTMLElement>,
-                      makeFn : () => Widget) {
+    protected makeSingleSpawner(button : JQuery<HTMLElement>,
+                                makeFn : () => Widget) {
         let listener = () => {
             button.removeAttr('disabled');
         };
@@ -270,14 +269,12 @@ export class Widget {
             () => {
                 button.attr('disabled','disabled');
                 let subW = makeFn();
-                this._app.insertAfterWidget(subW, this.element);
                 subW.addEventListener('close', listener);
             }
         );
     }
 
-    constructor(app: App, args?: WidgetArgs) {
-        this._app = app;
+    constructor(args?: WidgetArgs) {
         this._ew = $('<div class="widget" />');
         let dt = $('<details open="open"></details>').appendTo(this._ew);
         this._sum = $('<summary class="widget-top"></summary>').appendTo(dt);
@@ -298,6 +295,16 @@ export class Widget {
             if (contents !== undefined) this.setContents(contents);
         }
     }
+}
+
+// App-aware widget.
+export class AppWidget extends Widget {
+    protected _app : App;
+
+    constructor(app : App, args? : WidgetArgs) {
+        super(args);
+        this._app = app;
+    }
 
     // Generate an error handling function, suitable as an argument to
     //  a Promise's .catch()
@@ -305,10 +312,18 @@ export class Widget {
         let app = this._app;
         return (err : any) => app.handleError(err);
     };
+
+    protected makeSingleSpawner(button : JQuery<HTMLElement>,
+                                makeFn : () => Widget) {
+        super.makeSingleSpawner(button, () => {
+            let subW = makeFn();
+            this._app.insertAfterWidget(subW, this.element);
+            return subW;
+        });
+    }
 }
 
-
-export class MainWidget extends Widget {
+export class MainWidget extends AppWidget {
     private _cacheP : JQuery<HTMLElement>;
 
     constructor(app: App, args?: WidgetArgs) {
@@ -369,7 +384,7 @@ export class MainWidget extends Widget {
     }
 }
 
-export class SubscriptionsWidget extends Widget {
+export class SubscriptionsWidget extends AppWidget {
     _update : boolean;
 
     constructor(app: App, update? : 'update') {
@@ -435,7 +450,7 @@ export class SubscriptionsWidget extends Widget {
     }
 }
 
-export class BinsWidget extends Widget {
+export class BinsWidget extends AppWidget {
     _ta : JQuery<HTMLElement>;
     _btn : JQuery<HTMLElement>;
 
@@ -473,7 +488,7 @@ export interface ErrorWidgetArgs extends WidgetArgs {
     raw?: string
 }
 
-export class ErrorWidget extends Widget {
+export class ErrorWidget extends AppWidget {
     protected _msgEl : JQuery<HTMLElement>;
     protected _rawEl : JQuery<HTMLElement>;
 
