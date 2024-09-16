@@ -4,7 +4,7 @@ import { App } from './app'
 import { Widget, WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
 import { SubscriptionsWidget } from './w-subs'
-import { BinsWidget } from './w-bins'
+import { BinsEditWidget, BinsViewWidget } from './w-bins'
 
 export class MainWidget extends AppWidget {
     private _cacheP : JQuery<HTMLElement>;
@@ -17,6 +17,7 @@ export class MainWidget extends AppWidget {
 
         this._doSubsCache();
         this._doSubsView();
+        this._doBinsView();
     }
 
     _doSubsCache() {
@@ -35,10 +36,6 @@ export class MainWidget extends AppWidget {
             'cacheUpdated',
             () => { this._cacheUpdated(); },
         )
-
-        let bins = $('<button>Edit Subscription Bins (JSON)</button>')
-            .appendTo(this._ec);
-        this.makeSingleSpawner(bins, () => new BinsWidget(this._app));
     }
 
     _cacheUpdated() {
@@ -57,12 +54,25 @@ export class MainWidget extends AppWidget {
     _doSubsView() {
         let app = this._app;
         $('<div class="widget-section-heading">Subscriptions</div>').appendTo(this._ec);
-        let button = $('<button>View Subscriptions</button>')
+        let button = $('<button>View (Cached?) Subscriptions</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(button, () => new SubscriptionsWidget(app));
 
-        let update = $('<button>View Subscriptions (<strong>Updated</strong>)</button>')
+        let update = $('<button>View Subscriptions (<strong>Update Cache</strong>)</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(update, () => new SubscriptionsWidget(app, 'update'));
+    }
+
+    _doBinsView() {
+        let ec = this._ec;
+        $('<div class="widget-section-heading">Bins</div>').appendTo(ec);
+
+        let bins = $('<button>Edit Subscription Bins (JSON)</button>')
+            .appendTo(this._ec);
+        this.makeSingleSpawner(bins, () => new BinsEditWidget(this._app));
+
+        let binsView = $('<button><strong>View Bin Contents</strong></button>')
+            .appendTo(this._ec);
+        this.makeSingleSpawner(binsView, () => new BinsViewWidget(this._app));
     }
 }

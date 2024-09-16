@@ -158,7 +158,13 @@ export class SubscriptionList implements AsyncIterable<Channel> {
         this._yt = yt;
         this._pager = TESTING ?
             new DummyPagedRequestIterator
-          : new PagedRequestIterator(yt);
+          : new PagedRequestIterator(yt, {
+                path: 'subscriptions',
+                params: {
+                    mine: "true",
+                    part: "snippet",
+                    maxResults: "50",
+                }});
     }
 
     async *[Symbol.asyncIterator]() {
@@ -226,20 +232,15 @@ class DummyPagedRequestIterator implements AsyncIterable<RequestPage> {
     }
 }
 
-class PagedRequestIterator implements AsyncIterable<RequestPage> {
-    private _yt : Api;
+export class PagedRequestIterator implements AsyncIterable<RequestPage> {
+    protected _yt : Api;
+    protected _params : any;
 
     async *[Symbol.asyncIterator]() {
         let yt = this._yt;
         let nextPage : undefined | string;
-        let params : any = {
-            path: 'subscriptions',
-            params: {
-                mine: "true",
-                part: "snippet",
-                maxResults: "50",
-            },
-        };
+        let params : any = {};
+        $.extend(true, params, this._params);
         do {
             let response = await yt.getRequest(params);
             let parsed =  RequestPage.parse(response);
@@ -249,8 +250,9 @@ class PagedRequestIterator implements AsyncIterable<RequestPage> {
         } while (nextPage !== undefined);
     }
 
-    constructor(yt : Api) {
+    constructor(yt : Api, params : any) {
         this._yt = yt;
+        this._params = params;
     }
 }
 

@@ -17,7 +17,7 @@ type BinAssignments = Record<string, {
     bins: Set<string>
 }>;
 
-const BinsStruct = z.object({
+export const BinsStruct = z.object({
     "pl-names": z.record(z.string(), z.string()),
     "bins": z.record(
         z.string(),
@@ -29,7 +29,7 @@ const BinsStruct = z.object({
         ),
     ),
 });
-type BinsStruct = z.infer<typeof BinsStruct>;
+export type BinsStruct = z.infer<typeof BinsStruct>;
 
 export class App {
     ytApi : YT.Api;
