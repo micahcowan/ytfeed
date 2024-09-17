@@ -34,7 +34,7 @@ export const SubscriptionItem = z.object({
 });
 export type SubscriptionItem = z.infer<typeof SubscriptionItem>;
 
-export const PagelistItem = z.object({
+export const PlaylistItem = z.object({
     snippet: z.object({
         title: z.string(),
         videoOwnerChannelTitle: z.optional(z.string()),
@@ -56,7 +56,7 @@ export const PagelistItem = z.object({
         videoPublishedAt: z.optional(z.string().datetime()),
     }),
 });
-export type PagelistItem = z.infer<typeof PagelistItem>;
+export type PlaylistItem = z.infer<typeof PlaylistItem>;
 
 export const RequestPage = z.object({
     nextPageToken: z.optional( z.string() ),
@@ -94,6 +94,10 @@ export class Api {
 
     get subscriptions() {
         return this._subs;
+    }
+
+    getPlaylistItems(id : string) : AsyncIterable<PlaylistItem> {
+        return new PlaylistItemList(this, id);
     }
 
     async _getToken() : Promise<string> {
@@ -168,6 +172,34 @@ export class Api {
         }
     }
 };
+
+export class PlaylistItemList implements AsyncIterable<PlaylistItem> {
+    protected _yt : Api;
+    protected _binName : string;
+    protected _pager : AsyncIterable<RequestPage>;
+
+    async *[Symbol.asyncIterator]() {
+        for await (let page of this._pager) {
+            for await (let _item of page.items) {
+                let item = PlaylistItem.parse(_item);
+                yield item;
+            }
+        }
+    }
+
+    constructor(yt : Api, bin : string) {
+        this._yt = yt;
+        this._binName = bin;
+        this._pager = new PagedRequestIterator(yt, {
+            path: 'playlistItems',
+            params: {
+                playlistId: bin,
+                part: 'snippet,contentDetails',
+                maxResults: '50',
+            }
+        });
+    }
+}
 
 export class SubscriptionList implements AsyncIterable<Channel> {
     private _yt : Api;

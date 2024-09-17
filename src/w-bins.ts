@@ -87,42 +87,28 @@ export class BinsViewWidget extends AppWidget {
     async _asyncGetBinContents(loading : JQE) {
         let tube = this._app.ytApi;
 
-        let pgParams = {
-            path: 'playlistItems',
-            params: {
-                playlistId: '',
-                part: 'snippet,contentDetails',
-                maxResults: '50',
-            }
-        };
-
         let binEls = this._binEls;
         let remove = true;
         try {
             for (let bin in binEls) {
-                pgParams.params.playlistId = bin;
-                let pager = new YT.PagedRequestIterator(tube, pgParams);
                 let { count, ul, summ } = binEls[bin];
 
                 let c = 0;
-                for await (let page of pager) {
-                    for (let _item of page.items) {
-                        let item = YT.PagelistItem.parse(_item);
-                        let li = $('<li></li>').appendTo(ul);
-                        let st = $('<strong></strong>').appendTo(li);
-                        st.text(item.snippet.title);
-                        $('<span>&nbsp;</span>').appendTo(li);
-                        let chan = $('<span></span>').appendTo(li);
-                        let title = item.snippet.videoOwnerChannelTitle;
-                        if (title !== undefined) {
-                            chan.text(title);
-                        }
-                        else {
-                            console.log(`Video doesn't have owner! ${item.snippet.title} in bin ${this._binNames[bin]}`)
-                        }
-
-                        ++c;
+                for await (let item of tube.getPlaylistItems(bin)) {
+                    let li = $('<li></li>').appendTo(ul);
+                    let st = $('<strong></strong>').appendTo(li);
+                    st.text(item.snippet.title);
+                    $('<span>&nbsp;</span>').appendTo(li);
+                    let chan = $('<span></span>').appendTo(li);
+                    let title = item.snippet.videoOwnerChannelTitle;
+                    if (title !== undefined) {
+                        chan.text(title);
                     }
+                    else {
+                        console.log(`Video doesn't have owner! ${item.snippet.title} in bin ${this._binNames[bin]}`)
+                    }
+
+                    ++c;
                     count.text(c.toString());
                 }
                 if (c == 0) summ.addClass('de-emph');
