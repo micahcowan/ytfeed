@@ -1,6 +1,7 @@
 import $ from 'jquery'
+import { z } from 'zod'
 
-import { App, BinsStruct } from './app'
+import { App, BinsStruct, VidsToAdd } from './app'
 import LS from './lstor'
 import { WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
@@ -109,12 +110,7 @@ export class GetChanVidsWidget extends AppWidget {
         let chanMap = this._chanMap;
         let chanToUp = LS.chanToUploadList;
         let chanCnt = 0;
-        type VidAddRec = {
-            vidId: string,
-            vidName: string,
-            chanId: string,
-        };
-        type VidsToAdd = Record<string, VidAddRec[]>;
+
         let vidsToAdd : VidsToAdd = {};
         for (let chanName of Object.keys(chanMap).sort()) {
             for (let chanId in chanMap[chanName]) { // usually just one
@@ -139,18 +135,29 @@ export class GetChanVidsWidget extends AppWidget {
                     let uploadsItems = tube.getPlaylistItems(uploads);
                     let c = 0;
                     for await (let video of uploadsItems) {
-                        let vidDateStr = video.contentDetails.videoPublishedAt;
+                        let vidDateStr = video.snippet.publishedAt;
                         if (vidDateStr === undefined) {
                             continue;
                         }
-                        let vidDate = vidDateStr === undefined? undefined
-                            : new Date(vidDateStr);
-                        if (vidDate !== undefined
-                                && vidDate.valueOf() < minDate.valueOf()) {
+                        let vidDate = new Date(vidDateStr);
+                        if (vidDate.valueOf() < minDate.valueOf()) {
                             // We're into older videos now:
                             //  done with this channel!
                             break;
                         }
+
+                        let id = video.snippet.resourceId.videoId;
+                        if (!(vidDateStr in vidsToAdd)) {
+                            vidsToAdd[vidDateStr] = [];
+                        }
+                        vidsToAdd[vidDateStr].push({
+                            vidId: id,
+                            vidName: video.snippet.title,
+                            chanId: chanId,
+                            chanName: chanName,
+                            destBins: chanMap[chanName][chanId],
+                        });
+
                         let li = $('<li></li>').appendTo(ul);
                         let st = $('<strong></strong>').appendTo(li);
                         st.text(video.snippet.title);
@@ -163,6 +170,7 @@ export class GetChanVidsWidget extends AppWidget {
 
                         if (maxCount !== undefined && c >= maxCount)
                             break; // done processing vids for this chan
+                        break; //XXX
                     }
                 }
                 catch(err) {
@@ -174,11 +182,15 @@ export class GetChanVidsWidget extends AppWidget {
             if (chanCnt >= 15)
                 break;
         }
+
+        // Cache our results!
+        LS.vidsToAdd = vidsToAdd;
+        console.log(vidsToAdd)
     }
 }
 
 type BinsRevMapping =
-    Record<string, Record<string, string[]>>;
+    Record<string, Record<string, Set<string>>>;
 function getBinsRevMapping() : BinsRevMapping {
     /*
         "Bins" are mapped
@@ -191,9 +203,7 @@ function getBinsRevMapping() : BinsRevMapping {
 
         Actually, we really want
             [channel_name]: {
-                [channel_id] : {
-                    "bins": Set<bin_id>,
-                },
+                [channel_id] : "bins": Set<bin_id>,
                 ...
             }
         where `channel_info` includes destination playlist, and channel id.
@@ -217,9 +227,9 @@ function getBinsRevMapping() : BinsRevMapping {
             }
             let idRec = revMap[chan.name];
             if (!(chan.id in idRec)) {
-                idRec[chan.id] = [];
+                idRec[chan.id] = new Set<string>;
             }
-            idRec[chan.id].push(bin);
+            idRec[chan.id].add(bin);
         }
     }
 

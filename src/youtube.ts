@@ -27,6 +27,7 @@ export type YtError = z.infer<typeof Error>;
 export const PlaylistItem = z.object({
     snippet: z.object({
         title: z.string(),
+        publishedAt: z.optional(z.string().datetime()),
         videoOwnerChannelTitle: z.optional(z.string()),
         thumbnails: z.optional( z.object({
             default: z.optional( z.object({
@@ -38,10 +39,6 @@ export const PlaylistItem = z.object({
         resourceId: z.object({
             videoId: z.string(),
         }),
-    }),
-    contentDetails: z.object({
-        videoId: z.string(),
-        videoPublishedAt: z.optional(z.string().datetime()),
     }),
 });
 export type PlaylistItem = z.infer<typeof PlaylistItem>;
@@ -217,7 +214,7 @@ export class PlaylistItemList implements AsyncIterable<PlaylistItem> {
             path: 'playlistItems',
             params: {
                 playlistId: bin,
-                part: 'snippet,contentDetails',
+                part: 'snippet',
                 maxResults: '50',
             }
         });

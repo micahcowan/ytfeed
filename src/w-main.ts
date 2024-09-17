@@ -1,6 +1,7 @@
 import $ from 'jquery'
 
 import { App } from './app'
+import LS from './lstor'
 import { Widget, WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
 import { SubscriptionsWidget } from './w-subs'
@@ -78,6 +79,6 @@ export class MainWidget extends AppWidget {
         let calcBtn = $('<button>Calculate Video Feeds</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app));
-        //this._app.appendWidget(new GetChanVidsWidget(this._app));
+        console.log(LS.vidsToAdd);
     }
 }

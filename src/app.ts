@@ -16,6 +16,16 @@ type BinAssignments = Record<string, {
     bins: Set<string>
 }>;
 
+export const VidsToAdd =
+    z.record( z.string(), z.array( z.object({
+        vidId: z.string(),
+        vidName: z.string(),
+        chanId: z.string(),
+        chanName: z.string(),
+        destBins: z.array( z.string() ).transform((val) => new Set<string>(val)),
+    })));
+export type VidsToAdd = z.infer<typeof VidsToAdd>;
+
 export const BinsStruct = z.object({
     "pl-names": z.record(z.string(), z.string()),
     "bins": z.record(
