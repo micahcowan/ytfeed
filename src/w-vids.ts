@@ -12,6 +12,7 @@ export class GetChanVidsWidget extends AppWidget {
     _pCached : JQHE;
     _pToFetch : JQHE;
     _pFetched : JQHE;
+    _chanMap : BinsRevMapping;
 
     constructor(app : App, args? : WidgetArgs) {
         super(app, args);
@@ -25,13 +26,21 @@ export class GetChanVidsWidget extends AppWidget {
         this._pToFetch = $('<p></p>').appendTo(ec);
         this._pFetched = $('<p></p>').appendTo(ec);
 
+        this._chanMap = getBinsRevMapping();
+
         this._doAsyncStuff().catch(this.errorHandler);
     }
 
     async _doAsyncStuff() {
+        await this._doAsyncUpdateUploadListsMap();
+        await this._doAsyncGatherVideos();
+        this._loading.remove();
+    }
+
+    async _doAsyncUpdateUploadListsMap() {
         let tube = this._app.ytApi;
         let ec = this._ec;
-        let chanMap = getBinsRevMapping();
+        let chanMap = this._chanMap;
 	let chanToUp = LS.chanToUploadList;
         let missing = new Set<string>;
 
@@ -91,8 +100,14 @@ export class GetChanVidsWidget extends AppWidget {
 
             this._loading.text(origLoading);
         }
+    }
 
+    async _doAsyncGatherVideos() {
         // Now find all the (potentially) new videos
+        let ec = this._ec;
+        let tube = this._app.ytApi;
+        let chanMap = this._chanMap;
+        let chanToUp = LS.chanToUploadList;
         let chanCnt = 0;
         type VidAddRec = {
             vidId: string,
@@ -159,8 +174,6 @@ export class GetChanVidsWidget extends AppWidget {
             if (chanCnt >= 15)
                 break;
         }
-
-        this._loading.remove();
     }
 }
 
