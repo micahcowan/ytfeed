@@ -1,12 +1,9 @@
 import $ from 'jquery';
 import { z, ZodError } from 'zod';
 
-const TESTING=false
+import LS from './lstor'
 
-const lsSubsCache = 'ytfeed-subs-cache';
-const lsSubsCacheDate = 'ytfeed-subs-cache-date';
-const lsToken = 'ytfeed-acess-token';
-const lsTokenExpire = 'ytfeed-acess-token-expire-ms';
+const TESTING=false
 
 //-------------------- ZOD types --------------------
 export const Suberror = z.object({
@@ -100,11 +97,10 @@ export class Api {
     }
 
     async _getToken() : Promise<string> {
-        if (localStorage[lsToken] === undefined
-                || Number(localStorage[lsTokenExpire]) <= Date.now()) {
+        if (LS.token === undefined || LS.tokenExpired) {
             await this._refreshToken();
         }
-        return localStorage[lsToken];
+        return LS.token;
     }
 
     async _refreshToken() {
@@ -167,8 +163,8 @@ export class Api {
     handleParams(p : Record<string, string>) {
         if ('access_token' in p) {
             console.log('Processing new access token!');
-            localStorage[lsToken] = p.access_token;
-            localStorage[lsTokenExpire] = Date.now() + (Number(p.expires_in) * 1000);
+            LS.token = p.access_token;
+            LS.tokenExpiresIn_s = p.expires_in;
         }
     }
 };
@@ -193,7 +189,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
 
     async *[Symbol.asyncIterator]() {
         if (this.cached) {
-            let cache = JSON.parse(localStorage[lsSubsCache]);
+            let cache = LS.subsCache;
             for (let item of cache) {
                 yield new Channel(this._yt, item);
             }
@@ -219,7 +215,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
 
     async *getAsyncUpdatedIterator() {
         let cache = [];
-        let date = Date.now();
+        let date = new Date();
         for await (let page of (this._pager)) {
             for await (let _item of page.items) {
                 let item = SubscriptionItem.parse(_item);
@@ -227,22 +223,22 @@ export class SubscriptionList implements AsyncIterable<Channel> {
                 yield new Channel(this._yt, item);
             }
         }
-        localStorage[lsSubsCache] = JSON.stringify(cache);
-        localStorage[lsSubsCacheDate] = date;
+        LS.subsCache = cache;
+        LS.subsCacheDate = date;
         this._fireUpdated();
     }
 
     invalidateCache() {
-        delete localStorage[lsSubsCache];
+        LS.subsCache = [];
         this._fireUpdated();
     }
 
     get cached() : boolean {
-        return localStorage[lsSubsCache] !== undefined;
+        return LS.subsCache.length == 0;
     }
 
     get cacheDate() : Date {
-        return new Date(Number(localStorage[lsSubsCacheDate]));
+        return LS.subsCacheDate;
     }
 }
 

@@ -4,9 +4,8 @@ import { z } from 'zod';
 import { App, BinsStruct } from './app'
 import { WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
+import LS from './lstor'
 import * as YT from './youtube'
-
-const lsBins = 'ytfeed-bins';
 
 export class BinsEditWidget extends AppWidget {
     _ta : JQuery<HTMLElement>;
@@ -18,8 +17,9 @@ export class BinsEditWidget extends AppWidget {
 
         let ec = this._ec;
         let ta = this._ta = $('<textarea></textarea>').appendTo(ec);
-        if (localStorage[lsBins] !== undefined) {
-            ta.val(localStorage[lsBins]);
+        let bins = LS.bins_json;
+        if (bins !== undefined) {
+            ta.val(bins);
         }
         let btn = this._btn = $('<button>Update</button>').appendTo(ec)
             .click( () => {
@@ -30,11 +30,11 @@ export class BinsEditWidget extends AppWidget {
                     val = val.toString();
                 }
                 try {
-                    let json = JSON.stringify(JSON.parse(val),null,2);
-                    localStorage[lsBins] = json;
+                    let json = val;
+                    LS.bins = BinsStruct.parse(JSON.parse(json));
                 }
                 catch(err : any) {
-                    err.message += `\nJSON: ${val}`;
+                    console.error(`Error while parsing Bins JSON: ${val}`);
                     this.errorHandler(err);
                 }
             });
@@ -51,7 +51,11 @@ export class BinsViewWidget extends AppWidget {
         this.setTitle('View Bin Contents');
 
         let ec = this._ec;
-        let binStruct = BinsStruct.parse(JSON.parse(localStorage[lsBins]))
+        let binStruct = LS.bins;
+        if (binStruct === undefined) {
+            this.close();
+            throw new Error("Can't view bins that haven't been defined!");
+        }
         let bins = binStruct.bins;
         let binNames = this._binNames = binStruct['pl-names'];
 

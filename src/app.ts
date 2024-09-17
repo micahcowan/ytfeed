@@ -2,6 +2,7 @@ import $ from 'jquery';
 import z from 'zod';
 import 'jquery-color';
 
+import LS from './lstor';
 import * as YT from './youtube';
 import "./main.sass";
 
@@ -9,8 +10,6 @@ import { Widget, WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
 import { MainWidget } from './w-main'
 import { ErrorWidget, YtErrorWidget, ErrorWidgetArgs } from './w-error'
-
-const lsBins = 'ytfeed-bins';
 
 type BinAssignments = Record<string, {
     name: string,
@@ -162,10 +161,9 @@ export class App {
         // by bin, to produce an organization by channel, eached
         // mapped to an object whose keys are bin ids.
         let val : BinAssignments = {};
-        let ls = localStorage[lsBins];
-        if (ls === undefined)
+        let bins = LS.bins;
+        if (bins === undefined)
             return val;
-        let bins = BinsStruct.parse(JSON.parse(ls));
         for (let binName in bins.bins) {
             let bin = bins.bins[binName];
             for (let chanKey in bin) {
