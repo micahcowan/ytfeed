@@ -43,7 +43,7 @@ export class BinsEditWidget extends AppWidget {
 
 type JQE = JQuery<HTMLElement>;
 export class BinsViewWidget extends AppWidget {
-    _binEls : Record<string, {count: JQE, ul: JQE}> = {};
+    _binEls : Record<string, {count: JQE, ul: JQE, summ: JQE }> = {};
     _binNames : Record<string, string>;
 
     constructor(app: App, args?: WidgetArgs) {
@@ -74,7 +74,7 @@ export class BinsViewWidget extends AppWidget {
             $('<span>&nbsp;videos</span>').appendTo(summ);
             let ul = $('<ul></ul>').appendTo(deets);
 
-            this._binEls[bin] = { count: cnt, ul: ul };
+            this._binEls[bin] = { count: cnt, ul: ul, summ: summ };
         }
 
         this._asyncGetBinContents(loading);
@@ -98,7 +98,7 @@ export class BinsViewWidget extends AppWidget {
             for (let bin in binEls) {
                 pgParams.params.playlistId = bin;
                 let pager = new YT.PagedRequestIterator(tube, pgParams);
-                let { count, ul } = binEls[bin];
+                let { count, ul, summ } = binEls[bin];
 
                 let c = 0;
                 for await (let page of pager) {
@@ -121,6 +121,7 @@ export class BinsViewWidget extends AppWidget {
                     }
                     count.text(c.toString());
                 }
+                if (c == 0) summ.addClass('de-emph');
             }
         } catch(err) {
             this.errorHandler(err);
