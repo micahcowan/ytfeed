@@ -92,10 +92,22 @@ export class GetChanVidsWidget extends AppWidget {
             this._loading.text(origLoading);
         }
 
-        let names = (LS.bins as BinsStruct)["pl-names"];
         // Now find all the (potentially) new videos
+        let chanCnt = 0;
+        type VidAddRec = {
+            vidId: string,
+            vidName: string,
+            chanId: string,
+        };
+        type VidsToAdd = Record<string, VidAddRec[]>;
+        let vidsToAdd : VidsToAdd = {};
         for (let chanName of Object.keys(chanMap).sort()) {
             for (let chanInfo of chanMap[chanName]) { // usually just one
+                // Skip any channels that are unknown or ignored
+                if (chanInfo.binId == 'IGNORED')
+                    continue;
+
+                ++chanCnt;
                 let uploads = chanToUp[chanInfo.id];
 
                 // Create a drop-down for this channel
@@ -110,16 +122,36 @@ export class GetChanVidsWidget extends AppWidget {
                 $('<span>&nbsp;videos</span>').appendTo(summ);
                 let ul = $('<ul></ul>').appendTo(deets);
 
+                let { maxCount, minDate } = LS.getChannelLimits(chanInfo.id);
+
                 try {
-                    let plItems = tube.getPlaylistItems(uploads);
+                    let uploadsItems = tube.getPlaylistItems(uploads);
                     let c = 0;
-                    for await (let item of plItems) {
+                    for await (let video of uploadsItems) {
+                        let vidDateStr = video.contentDetails.videoPublishedAt;
+                        if (vidDateStr === undefined) {
+                            continue;
+                        }
+                        let vidDate = vidDateStr === undefined? undefined
+                            : new Date(vidDateStr);
+                        if (vidDate !== undefined
+                                && vidDate.valueOf() < minDate.valueOf()) {
+                            // We're into older videos now:
+                            //  done with this channel!
+                            break;
+                        }
                         let li = $('<li></li>').appendTo(ul);
                         let st = $('<strong></strong>').appendTo(li);
-                        st.text(item.snippet.title);
+                        st.text(video.snippet.title);
+                        $('<span>&nbsp;</span>').appendTo(li);
+                        let date = $('<span></span>').appendTo(li);
+                        date.text(vidDateStr);
 
                         ++c;
                         count.text(c.toString());
+
+                        if (maxCount !== undefined && c >= maxCount)
+                            break; // done processing vids for this chan
                     }
                 }
                 catch(err) {
@@ -127,7 +159,8 @@ export class GetChanVidsWidget extends AppWidget {
                     return;
                 }
             }
-            break;
+            if (chanCnt >= 15)
+                break;
         }
 
         this._loading.remove();

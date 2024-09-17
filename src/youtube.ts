@@ -28,15 +28,13 @@ export const PlaylistItem = z.object({
     snippet: z.object({
         title: z.string(),
         videoOwnerChannelTitle: z.optional(z.string()),
-        /*
-        thumbnails: z.object({
-            default: z.object({
+        thumbnails: z.optional( z.object({
+            default: z.optional( z.object({
                 url: z.string(),
                 width: z.number(),
                 height: z.number(),
-            }),
-        }),
-        */
+            })),
+        })),
         resourceId: z.object({
             videoId: z.string(),
         }),

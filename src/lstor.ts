@@ -76,4 +76,12 @@ export default class LS {
     static set chanToUploadList(m : Record<string, string>) {
         localStorage['ytfeed-chan-to-uploads'] = JSON.stringify(m,null,1);
     }
+
+    static getChannelLimits(chanId : string) {
+        // For now, just return "global" defaults
+        return {
+            maxCount: 100,                  /* v  thirty days */
+            minDate: new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)),
+        };
+    }
 }
