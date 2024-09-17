@@ -29,6 +29,8 @@ export class GetChanVidsWidget extends AppWidget {
     }
 
     async _doAsyncStuff() {
+        let tube = this._app.ytApi;
+        let ec = this._ec;
         let chanMap = getBinsRevMapping();
 	let chanToUp = LS.chanToUploadList;
         let missing = [];
@@ -50,8 +52,8 @@ export class GetChanVidsWidget extends AppWidget {
 
         if (missing.length > 0) {
             // Now fetch 'em!
-            let tube = this._app.ytApi;
             let channels = tube.getChannels(missing);
+            let origLoading = this._loading.text();
             this._loading.text('Updating cached upload-lists...');
             try {
                 for await (let chan of channels) {
@@ -86,14 +88,49 @@ export class GetChanVidsWidget extends AppWidget {
                    'YouTube failed to provide channel info for some needed channels (maybe they were deleted?)', JSON.stringify(still_missing,null,2));
                 return;
             }
+
+            this._loading.text(origLoading);
         }
 
+        let names = (LS.bins as BinsStruct)["pl-names"];
         // Now find all the (potentially) new videos
         for (let chanName of Object.keys(chanMap).sort()) {
             for (let chanInfo of chanMap[chanName]) { // usually just one
-                //
+                let uploads = chanToUp[chanInfo.id];
+
+                // Create a drop-down for this channel
+                let deets = $('<details></details>').appendTo(ec);
+                let summ = $('<summary></summary>').appendTo(deets);
+                let p = $('<strong></strong>').appendTo(summ);
+
+                p.text(chanName);
+
+                let follow = $('<span>&nbsp;&nbsp;&nbsp;</span>').appendTo(summ);
+                let count = $('<span>0</span>').appendTo(summ);
+                $('<span>&nbsp;videos</span>').appendTo(summ);
+                let ul = $('<ul></ul>').appendTo(deets);
+
+                try {
+                    let plItems = tube.getPlaylistItems(uploads);
+                    let c = 0;
+                    for await (let item of plItems) {
+                        let li = $('<li></li>').appendTo(ul);
+                        let st = $('<strong></strong>').appendTo(li);
+                        st.text(item.snippet.title);
+
+                        ++c;
+                        count.text(c.toString());
+                    }
+                }
+                catch(err) {
+                    this._app.handleError(err);
+                    return;
+                }
             }
+            break;
         }
+
+        this._loading.remove();
     }
 }
 
