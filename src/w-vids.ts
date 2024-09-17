@@ -25,7 +25,7 @@ export class GetChanVidsWidget extends AppWidget {
         this._pToFetch = $('<p></p>').appendTo(ec);
         this._pFetched = $('<p></p>').appendTo(ec);
 
-        this._doAsyncStuff().then(() => undefined);
+        this._doAsyncStuff().catch(this.errorHandler);
     }
 
     async _doAsyncStuff() {

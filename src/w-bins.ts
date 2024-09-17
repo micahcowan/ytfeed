@@ -81,7 +81,7 @@ export class BinsViewWidget extends AppWidget {
             this._binEls[bin] = { count: cnt, ul: ul, summ: summ };
         }
 
-        this._asyncGetBinContents(loading);
+        this._asyncGetBinContents(loading).catch(this.errorHandler);
     }
 
     async _asyncGetBinContents(loading : JQE) {
