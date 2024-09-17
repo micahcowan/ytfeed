@@ -39,6 +39,7 @@ export class MainWidget extends AppWidget {
         let tube = this._app.ytApi;
         $('<div class="widget-section-heading">Subscriptions</div>').appendTo(this._ec);
 
+        this._cacheP.appendTo(this._ec);
         let inv = $('<button>Delete Cache</button>').appendTo(this._ec)
             .click(() => { tube.subscriptions.invalidateCache(); });
 

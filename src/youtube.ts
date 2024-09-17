@@ -234,7 +234,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
     }
 
     get cached() : boolean {
-        return LS.subsCache.length == 0;
+        return LS.subsCache.length != 0;
     }
 
     get cacheDate() : Date {
