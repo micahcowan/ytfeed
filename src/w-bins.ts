@@ -103,7 +103,7 @@ export class BinsViewWidget extends AppWidget {
                 let c = 0;
                 for await (let page of pager) {
                     for (let _item of page.items) {
-                        let item = PagelistItem.parse(_item);
+                        let item = YT.PagelistItem.parse(_item);
                         let li = $('<li></li>').appendTo(ul);
                         let st = $('<strong></strong>').appendTo(li);
                         st.text(item.snippet.title);
@@ -131,27 +131,3 @@ export class BinsViewWidget extends AppWidget {
         if (remove) loading.remove();
     }
 }
-
-const PagelistItem = z.object({
-    snippet: z.object({
-        title: z.string(),
-        videoOwnerChannelTitle: z.optional(z.string()),
-        /*
-        thumbnails: z.object({
-            default: z.object({
-                url: z.string(),
-                width: z.number(),
-                height: z.number(),
-            }),
-        }),
-        */
-        resourceId: z.object({
-            videoId: z.string(),
-        }),
-    }),
-    contentDetails: z.object({
-        videoId: z.string(),
-        videoPublishedAt: z.optional(z.string().datetime()),
-    }),
-});
-type PagelistItem = z.infer<typeof PagelistItem>;

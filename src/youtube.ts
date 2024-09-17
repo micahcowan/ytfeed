@@ -37,6 +37,30 @@ export const SubscriptionItem = z.object({
 });
 export type SubscriptionItem = z.infer<typeof SubscriptionItem>;
 
+export const PagelistItem = z.object({
+    snippet: z.object({
+        title: z.string(),
+        videoOwnerChannelTitle: z.optional(z.string()),
+        /*
+        thumbnails: z.object({
+            default: z.object({
+                url: z.string(),
+                width: z.number(),
+                height: z.number(),
+            }),
+        }),
+        */
+        resourceId: z.object({
+            videoId: z.string(),
+        }),
+    }),
+    contentDetails: z.object({
+        videoId: z.string(),
+        videoPublishedAt: z.optional(z.string().datetime()),
+    }),
+});
+export type PagelistItem = z.infer<typeof PagelistItem>;
+
 export const RequestPage = z.object({
     nextPageToken: z.optional( z.string() ),
     items: z.array(z.unknown()),
