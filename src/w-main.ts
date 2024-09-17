@@ -5,6 +5,7 @@ import { Widget, WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
 import { SubscriptionsWidget } from './w-subs'
 import { BinsEditWidget, BinsViewWidget } from './w-bins'
+import { GetChanVidsWidget } from './w-vids'
 
 export class MainWidget extends AppWidget {
     private _cacheP : JQuery<HTMLElement>;
@@ -15,27 +16,9 @@ export class MainWidget extends AppWidget {
 
         this._cacheP = $('<div></div>');
 
-        this._doSubsCache();
         this._doSubsView();
         this._doBinsView();
-    }
-
-    _doSubsCache() {
-        let ec = this._ec;
-        let tube = this._app.ytApi;
-
-        $('<div class="widget-section-heading">Cached data</div>').appendTo(ec);
-        let p = this._cacheP;
-        p.appendTo(ec);
-
-        let inv = $('<button>Delete Cache</button>').appendTo(ec)
-            .click(() => { tube.subscriptions.invalidateCache(); });
-
-        this._cacheUpdated();
-        tube.subscriptions.addEventListener(
-            'cacheUpdated',
-            () => { this._cacheUpdated(); },
-        )
+        this._doCalcFeeds();
     }
 
     _cacheUpdated() {
@@ -53,7 +36,12 @@ export class MainWidget extends AppWidget {
 
     _doSubsView() {
         let app = this._app;
+        let tube = this._app.ytApi;
         $('<div class="widget-section-heading">Subscriptions</div>').appendTo(this._ec);
+
+        let inv = $('<button>Delete Cache</button>').appendTo(this._ec)
+            .click(() => { tube.subscriptions.invalidateCache(); });
+
         let button = $('<button>View (Cached?) Subscriptions</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(button, () => new SubscriptionsWidget(app));
@@ -61,6 +49,12 @@ export class MainWidget extends AppWidget {
         let update = $('<button>View Subscriptions (<strong>Update Cache</strong>)</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(update, () => new SubscriptionsWidget(app, 'update'));
+
+        this._cacheUpdated();
+        tube.subscriptions.addEventListener(
+            'cacheUpdated',
+            () => { this._cacheUpdated(); },
+        )
     }
 
     _doBinsView() {
@@ -74,5 +68,14 @@ export class MainWidget extends AppWidget {
         let binsView = $('<button><strong>View Bin Contents</strong></button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(binsView, () => new BinsViewWidget(this._app));
+    }
+
+    _doCalcFeeds() {
+        let ec = this._ec;
+        $('<div class="widget-section-heading">Playlist Feeder</div>').appendTo(ec);
+
+        let calcBtn = $('<button>Calculate Video Feeds</button>')
+            .appendTo(this._ec);
+        this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app));
     }
 }
