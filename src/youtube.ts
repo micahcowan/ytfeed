@@ -24,16 +24,6 @@ export const Error = z.object({
 export type Error = z.infer<typeof Error>;
 export type YtError = z.infer<typeof Error>;
 
-export const SubscriptionItem = z.object({
-    snippet: z.object({
-        title: z.string(),
-        resourceId: z.object({
-            channelId: z.string()
-        }),
-    }),
-});
-export type SubscriptionItem = z.infer<typeof SubscriptionItem>;
-
 export const PlaylistItem = z.object({
     snippet: z.object({
         title: z.string(),
@@ -98,6 +88,10 @@ export class Api {
 
     getPlaylistItems(id : string) : AsyncIterable<PlaylistItem> {
         return new PlaylistItemList(this, id);
+    }
+
+    getChannels(ids : string[]) : AsyncIterable<Channel> {
+        return new ChannelsList(this, ids);
     }
 
     async _getToken() : Promise<string> {
@@ -173,6 +167,43 @@ export class Api {
     }
 };
 
+export class ChannelsList implements AsyncIterable<Channel> {
+    protected _yt : Api;
+    private _ids : string[];
+
+    async *[Symbol.asyncIterator]() {
+        let ids = this._ids;
+        while (ids.length > 0) {
+            let batch = ids.splice(0, 50);
+            let pager = new PagedRequestIterator(this._yt, {
+                path: 'channels',
+                params: {
+                    id: batch.join(),
+                    part: 'snippet,contentDetails',
+                    maxResults: '50',
+                }
+            });
+
+            for await (let page of pager) {
+                for await (let item of page.items) {
+                    try {
+                        yield Channel.parse(item);
+                    }
+                    catch (err) {
+                        console.error(item);
+                        throw (err);
+                    }
+                }
+            }
+        }
+    }
+
+    constructor(yt : Api, ids : string[]) {
+        this._yt = yt;
+        this._ids = ids;
+    }
+}
+
 export class PlaylistItemList implements AsyncIterable<PlaylistItem> {
     protected _yt : Api;
     protected _binName : string;
@@ -201,7 +232,7 @@ export class PlaylistItemList implements AsyncIterable<PlaylistItem> {
     }
 }
 
-export class SubscriptionList implements AsyncIterable<Channel> {
+export class SubscriptionList implements AsyncIterable<SubscriptionItem> {
     private _yt : Api;
     private _pager : AsyncIterable<RequestPage>;
     private _listeners : (() => void)[] = [];
@@ -223,7 +254,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
         if (this.cached) {
             let cache = LS.subsCache;
             for (let item of cache) {
-                yield new Channel(this._yt, item);
+                yield SubscriptionItem.parse(item);
             }
         }
         else {
@@ -252,7 +283,7 @@ export class SubscriptionList implements AsyncIterable<Channel> {
             for await (let _item of page.items) {
                 let item = SubscriptionItem.parse(_item);
                 cache.push(item);
-                yield new Channel(this._yt, item);
+                yield item;
             }
         }
         LS.subsCache = cache;
@@ -308,16 +339,28 @@ export class PagedRequestIterator implements AsyncIterable<RequestPage> {
     }
 }
 
-export class Channel {
-    private _yt : Api;
-    public title : string;
-    public id : string;
-    constructor(yt : Api, json : SubscriptionItem) {
-        this._yt = yt;
-        this.title = json.snippet.title;
-        this.id = json.snippet.resourceId.channelId;
-    }
-}
+export const Channel = z.object({
+    id: z.string(),
+    snippet: z.object({
+        title: z.string(),
+    }),
+    contentDetails: z.object({
+        relatedPlaylists: z.object({
+            uploads: z.string(),
+        }),
+    }),
+});
+export type Channel = z.infer<typeof Channel>;
+
+export const SubscriptionItem = z.object({
+    snippet: z.object({
+        title: z.string(),
+        resourceId: z.object({
+            channelId: z.string(),
+        }),
+    }),
+});
+export type SubscriptionItem = z.infer<typeof SubscriptionItem>;
 
 export class Exception extends window.Error {
     ytError : Error;

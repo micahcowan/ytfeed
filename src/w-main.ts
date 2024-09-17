@@ -78,5 +78,6 @@ export class MainWidget extends AppWidget {
         let calcBtn = $('<button>Calculate Video Feeds</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app));
+        //this._app.appendWidget(new GetChanVidsWidget(this._app));
     }
 }

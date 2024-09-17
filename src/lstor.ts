@@ -66,4 +66,14 @@ export default class LS {
     static set bins(bins : BinsStruct) {
         localStorage['ytfeed-bins'] = JSON.stringify(bins,null,2);
     }
+
+    static get chanToUploadList() : Record<string, string> {
+        let ls = localStorage['ytfeed-chan-to-uploads'];
+        if (ls === undefined)
+            return {};
+        return JSON.parse(ls);
+    }
+    static set chanToUploadList(m : Record<string, string>) {
+        localStorage['ytfeed-chan-to-uploads'] = JSON.stringify(m,null,1);
+    }
 }

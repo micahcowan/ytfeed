@@ -34,23 +34,23 @@ export class SubscriptionsWidget extends AppWidget {
         let allSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
 
         let assign = this._app.getAssignedBins();
-        let iter : AsyncIterable<YT.Channel> = tube.subscriptions;
+        let iter : AsyncIterable<YT.SubscriptionItem> = tube.subscriptions;
         if (this._update) {
             iter = tube.subscriptions.getAsyncUpdatedIterator();
         }
         for await (let chan of iter) {
             let li = $('<li />');
             let t = $('<span class="subs-title" />');
-            t.text(chan.title);
+            t.text(chan.snippet.title);
             t.appendTo(li);
             let id = $('<span class="subs-id" />');
-            id.text(chan.id);
+            id.text(chan.snippet.resourceId.channelId);
             id.appendTo(li);
             li.hide();
             li.appendTo(allSubsUl);
             li.slideDown('fast');
 
-            let a = assign[chan.id];
+            let a = assign[chan.snippet.resourceId.channelId];
             if (a === undefined) {
                 li.clone().appendTo(unkSubsUl);
             }
