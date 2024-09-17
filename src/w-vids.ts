@@ -33,26 +33,26 @@ export class GetChanVidsWidget extends AppWidget {
         let ec = this._ec;
         let chanMap = getBinsRevMapping();
 	let chanToUp = LS.chanToUploadList;
-        let missing = [];
+        let missing = new Set<string>;
 
         // Give a message about how many channel upload lists are cached
         this._pCached.text(`channel uploads-list cache has data for ${Object.keys(chanToUp).length} channels.`);
 
         // Ensure we have up-to-date channel-to-uploads-list mapping
         for (let chanName of Object.keys(chanMap).sort()) {
-            for (let chanInfo of chanMap[chanName]) { // usually just one
-                if (!(chanInfo.id in chanToUp)) {
-                    missing.push(chanInfo.id);
+            for (let chanId in chanMap[chanName]) { // usually just one
+                if (!(chanId in chanToUp)) {
+                    missing.add(chanId);
                 }
             }
         }
 
         // Give a message about how many channel upload lists need fetching
-        this._pToFetch.text(`there are ${missing.length} channels that are missing "uploads" list information.`);
+        this._pToFetch.text(`there are ${missing.size} channels that are missing "uploads" list information.`);
 
-        if (missing.length > 0) {
+        if (missing.size > 0) {
             // Now fetch 'em!
-            let channels = tube.getChannels(missing);
+            let channels = tube.getChannels(Array.from(missing.values()));
             let origLoading = this._loading.text();
             this._loading.text('Updating cached upload-lists...');
             try {
@@ -102,13 +102,9 @@ export class GetChanVidsWidget extends AppWidget {
         type VidsToAdd = Record<string, VidAddRec[]>;
         let vidsToAdd : VidsToAdd = {};
         for (let chanName of Object.keys(chanMap).sort()) {
-            for (let chanInfo of chanMap[chanName]) { // usually just one
-                // Skip any channels that are unknown or ignored
-                if (chanInfo.binId == 'IGNORED')
-                    continue;
-
+            for (let chanId in chanMap[chanName]) { // usually just one
                 ++chanCnt;
-                let uploads = chanToUp[chanInfo.id];
+                let uploads = chanToUp[chanId];
 
                 // Create a drop-down for this channel
                 let deets = $('<details></details>').appendTo(ec);
@@ -122,7 +118,7 @@ export class GetChanVidsWidget extends AppWidget {
                 $('<span>&nbsp;videos</span>').appendTo(summ);
                 let ul = $('<ul></ul>').appendTo(deets);
 
-                let { maxCount, minDate } = LS.getChannelLimits(chanInfo.id);
+                let { maxCount, minDate } = LS.getChannelLimits(chanId);
 
                 try {
                     let uploadsItems = tube.getPlaylistItems(uploads);
@@ -159,6 +155,7 @@ export class GetChanVidsWidget extends AppWidget {
                     return;
                 }
             }
+            // XXX
             if (chanCnt >= 15)
                 break;
         }
@@ -167,11 +164,8 @@ export class GetChanVidsWidget extends AppWidget {
     }
 }
 
-type BinsRevMapping = Record<string, ChanInfo[]>;
-type ChanInfo = {
-    id: string,
-    binId: string,
-};
+type BinsRevMapping =
+    Record<string, Record<string, string[]>>;
 function getBinsRevMapping() : BinsRevMapping {
     /*
         "Bins" are mapped
@@ -183,13 +177,17 @@ function getBinsRevMapping() : BinsRevMapping {
         so that we have a unique mapping of a one channel to one key
 
         Actually, we really want
-            channel_name => [channel_info],
+            [channel_name]: {
+                [channel_id] : {
+                    "bins": Set<bin_id>,
+                },
+                ...
+            }
         where `channel_info` includes destination playlist, and channel id.
 	That way we have a mapping whose keys can be sorted more
 	naturally for human consumption.
 
-        Why an array? Well, more than one channel might wind up having
-        the same fucking name, mightn't it?
+        Note that a given channel id may appear in multiple "bins".
     */
 
     let binStruct = LS.bins;
@@ -199,14 +197,16 @@ function getBinsRevMapping() : BinsRevMapping {
     let curBin;
 
     for (let bin of Object.keys(bins)) {
+        if (bin === 'IGNORE') continue; // SKIP ignored channels
         for (let chan of bins[bin]) {
             if (!(chan.name in revMap)) {
-                revMap[chan.name] = [];
+                revMap[chan.name] = {};
             }
-            revMap[chan.name].push({
-                id: chan.id,
-                binId: bin,
-            });
+            let idRec = revMap[chan.name];
+            if (!(chan.id in idRec)) {
+                idRec[chan.id] = [];
+            }
+            idRec[chan.id].push(bin);
         }
     }
 
