@@ -1,6 +1,6 @@
 import $ from 'jquery'
 
-import { App } from './app'
+import { App, BinsStruct } from './app'
 import LS from './lstor'
 import { WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
@@ -25,10 +25,10 @@ export class GetChanVidsWidget extends AppWidget {
         this._pToFetch = $('<p></p>').appendTo(ec);
         this._pFetched = $('<p></p>').appendTo(ec);
 
-        this._doStuff().then(() => undefined);
+        this._doAsyncStuff().then(() => undefined);
     }
 
-    async _doStuff() {
+    async _doAsyncStuff() {
         let chanMap = getBinsRevMapping();
 	let chanToUp = LS.chanToUploadList;
         let missing = [];
@@ -52,14 +52,40 @@ export class GetChanVidsWidget extends AppWidget {
             // Now fetch 'em!
             let tube = this._app.ytApi;
             let channels = tube.getChannels(missing);
-            for await (let chan of channels) {
-                // XXX grab the uploads info
+            this._loading.text('Updating cached upload-lists...');
+            try {
+                for await (let chan of channels) {
+                    let id = chan.id;
+                    let uploads = chan.contentDetails.relatedPlaylists.uploads;
+
+                    chanToUp[id] = uploads;
+                }
             }
+            catch(err) {
+                this._app.handleError(err);
+                return;
+            }
+
+            LS.chanToUploadList = chanToUp; // update the cache!
 
             // Now go double check that none of the missing channels are
             // still lacking uploads-list info
+            let still_missing = [];
+            let names = (LS.bins as BinsStruct)["pl-names"];
+            for (let m in missing) {
+                if (!(m in chanToUp)) {
+                    still_missing.push(`${names[m]} (${m})`);
+                }
+            }
 
             // Give a message about the final results
+            let c = still_missing.length;
+            this._pFetched.text(`After cache update, ${c} channels are still unaccounted-for.`);
+            if (c !== 0) {
+                this._app.addError('Channels Missing',
+                   'YouTube failed to provide channel info for some needed channels (maybe they were deleted?)', JSON.stringify(still_missing,null,2));
+                return;
+            }
         }
 
         // Now find all the (potentially) new videos

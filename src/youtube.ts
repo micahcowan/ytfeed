@@ -186,13 +186,7 @@ export class ChannelsList implements AsyncIterable<Channel> {
 
             for await (let page of pager) {
                 for await (let item of page.items) {
-                    try {
-                        yield Channel.parse(item);
-                    }
-                    catch (err) {
-                        console.error(item);
-                        throw (err);
-                    }
+                    yield Channel.parse(item);
                 }
             }
         }
