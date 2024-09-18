@@ -58,8 +58,8 @@ export class SortVidsWidget extends AppWidget {
             console.log(`spans length: ${spans.length}`);
             let cntNewTotal = $(spans[0]);
             let cntPres     = $(spans[1]);
-            let cntKept     = $(spans[2]);
-            let cntRem      = $(spans[3]);
+            let cntRem      = $(spans[2]);
+            let cntKept     = $(spans[3]);
             let cntAdd      = $(spans[4]);
             let cntNoAdd    = $(spans[5]);
 
