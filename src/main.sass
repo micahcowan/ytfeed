@@ -137,6 +137,10 @@ summary.widget-top
   font-size: 0.8rem
   margin-left: 1rem
 
+.yt-id
+  font-family: New Courier, Courier, monospace
+  font-size: 0.8rem
+
 
 @keyframes loading
   0%
@@ -146,12 +150,33 @@ summary.widget-top
   100%
     color: rgba(128,0,0,255)
 
+@keyframes loading-desc
+  0%
+    color: #a00
+  50%
+    color: black
+  100%
+    color: #a00
+
 .loading
   font-weight: bold
   font-style: italic
   animation-name: loading
   animation-duration: 2s
   animation-iteration-count: infinite
+
+.loading strong, .loading-desc strong
+  text-decoration: underline
+
+.loading-desc
+  color: #a00
+  //font-weight: bold
+  //animation-name: loading-desc
+  //animation-duration: 1s
+  //animation-iteration-count: infinite
+
+.dateIso
+  font-family: New Courier, Courier, monospace
 
 .sort-vids-not-adding li
   background-color: silver

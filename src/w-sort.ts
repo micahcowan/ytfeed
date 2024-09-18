@@ -55,7 +55,6 @@ export class SortVidsWidget extends AppWidget {
             let follow = $('<span><span>0</span> videos - <span>0</span> present (<span>0</span> rm, <span>0</span> kept), <span>0</span> added, <snap>0</snap> omit</span>').appendTo(summ);
             let spans = $('span', follow);
 
-            console.log(`spans length: ${spans.length}`);
             let cntNewTotal = $(spans[0]);
             let cntPres     = $(spans[1]);
             let cntRem      = $(spans[2]);

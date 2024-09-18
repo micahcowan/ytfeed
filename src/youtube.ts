@@ -8,7 +8,7 @@ const TESTING=false
 //-------------------- ZOD types --------------------
 export const Suberror = z.object({
     message: z.string(),
-    domain: z.string(),
+    domain: z.optional (z.string() ),
     reason: z.string(),
 });
 export type Suberror = z.infer<typeof Suberror>;
@@ -57,6 +57,8 @@ type HttpMethod = 'GET' | 'POST' | 'PUT';
 interface RequestArgs {
     path: string,
     params: Record<string, string>;
+    body?: any,
+    accepts?: string,
 }
 
 //
@@ -120,13 +122,21 @@ export class Api {
         let token = await this._getToken();
 
         let url = `${this.basePath}/${args.path}?${encodeParams(args.params)}`
-        let requestPromise = $.ajax({
+        let params : any = {
             url: url,
             method: method,
             headers: {
                 'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
             },
-        });
+        };
+        if (args.body !== undefined) {
+            params.data = JSON.stringify(args.body);
+            params.contentType = 'application/json';
+            //params.headers = { Accept: 'application/json' };
+        }
+
+        let requestPromise = $.ajax(params);
 
         try {
             return await requestPromise;
@@ -152,8 +162,33 @@ export class Api {
         }
     }
 
+    async postRequest(args: RequestArgs) : Promise<object> {
+        return this.doRequest('POST', args);
+    }
+
     async getRequest(args: RequestArgs) : Promise<object> {
         return this.doRequest('GET', args);
+    }
+
+    async addVideo(bin : string, vidId :string) {
+        let args : RequestArgs = {
+            path: 'playlistItems',
+            accepts: 'application/json',
+            params: {
+                part: 'snippet',
+            },
+            body: {
+                snippet: {
+                    position: 0,
+                    playlistId: bin,
+                    resourceId: {
+                        kind: "youtube#video",
+                        videoId: vidId,
+                    },
+                }
+            },
+        }
+        return await this.postRequest(args);
     }
 
     handleParams(p : Record<string, string>) {

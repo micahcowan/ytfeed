@@ -8,6 +8,7 @@ import { SubscriptionsWidget } from './w-subs'
 import { BinsEditWidget, BinsViewWidget } from './w-bins'
 import { GetChanVidsWidget } from './w-vids'
 import { SortVidsWidget } from './w-sort'
+import { FillBinsWidget  }from './w-fill'
 
 export class MainWidget extends AppWidget {
     private _cacheP : JQuery<HTMLElement>;
@@ -86,6 +87,10 @@ export class MainWidget extends AppWidget {
             let sortBtn = $('<button>Sort Found Videos</button>')
                 .appendTo(this._ec);
             this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app));
+
+            let fillBtn = $('<button><strong>Fill the Bins!!!</strong></button>')
+                .appendTo(this._ec);
+            this.makeSingleSpawner(fillBtn, () => new FillBinsWidget(this._app));
         }
     }
 }

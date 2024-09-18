@@ -87,9 +87,16 @@ export default class LS {
 
     static getChannelLimits(chanId : string) {
         // For now, just return "global" defaults
+        //                                v  thirty days
+        let dflDate = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
+        let dflMs = dflDate.valueOf();
+        let minDate = localStorage['yt-feed-mindate'];
+        if (minDate === undefined) minDate = new Date(0);
+        let minMs = minDate.valueOf();
+
         return {
-            maxCount: 100,                  /* v  thirty days */
-            minDate: new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)),
+            maxCount: 100,
+            minDate: (minMs > dflMs)? minDate : dflDate
         };
     }
 
@@ -112,5 +119,9 @@ export default class LS {
             localStorage['ytfeed-cached-vids-to-add']
                 = JSON.stringify(vidsToAdd,replacer,1);
         }
+    }
+
+    static set minDate(d : Date) {
+        localStorage['yt-feed-mindate'] = d.toISOString();
     }
 }
