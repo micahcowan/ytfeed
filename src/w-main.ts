@@ -76,7 +76,7 @@ export class MainWidget extends AppWidget {
         let ec = this._ec;
         $('<div class="widget-section-heading">Playlist Feeder</div>').appendTo(ec);
 
-        let calcBtn = $('<button>Calculate Video Feeds</button>')
+        let calcBtn = $('<button>Find New Videos</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app));
         console.log(LS.vidsToAdd);

@@ -2,6 +2,7 @@ import $ from 'jquery'
 import { z } from 'zod'
 
 import { App, BinsStruct, VidsToAdd } from './app'
+import * as YT from './youtube'
 import LS from './lstor'
 import { WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
@@ -13,6 +14,7 @@ export class GetChanVidsWidget extends AppWidget {
     _pCached : JQHE;
     _pToFetch : JQHE;
     _pFetched : JQHE;
+    _pVidsFetched : JQHE
     _chanMap : BinsRevMapping;
 
     constructor(app : App, args? : WidgetArgs) {
@@ -26,6 +28,7 @@ export class GetChanVidsWidget extends AppWidget {
         this._pCached = $('<p></p>').appendTo(ec);
         this._pToFetch = $('<p></p>').appendTo(ec);
         this._pFetched = $('<p></p>').appendTo(ec);
+        this._pVidsFetched = $('<p></p>').appendTo(ec);
 
         this._chanMap = getBinsRevMapping();
 
@@ -109,6 +112,7 @@ export class GetChanVidsWidget extends AppWidget {
         let tube = this._app.ytApi;
         let chanMap = this._chanMap;
         let chanToUp = LS.chanToUploadList;
+        let totalVids = 0;
         let chanCnt = 0;
 
         let vidsToAdd : VidsToAdd = {};
@@ -124,7 +128,10 @@ export class GetChanVidsWidget extends AppWidget {
 
                 p.text(chanName);
 
-                let follow = $('<span>&nbsp;&nbsp;&nbsp;</span>').appendTo(summ);
+                $('<span>&nbsp;</span>').appendTo(summ);
+                let subsId = $('<span class="subs-id"></span>').appendTo(summ);
+                subsId.text(chanId);
+                $('<span>&nbsp;&nbsp;&nbsp;</span>').appendTo(summ);
                 let count = $('<span>0</span>').appendTo(summ);
                 $('<span>&nbsp;videos</span>').appendTo(summ);
                 let ul = $('<ul></ul>').appendTo(deets);
@@ -166,21 +173,27 @@ export class GetChanVidsWidget extends AppWidget {
                         date.text(vidDateStr);
 
                         ++c;
+                        ++totalVids;
                         count.text(c.toString());
+                        this._pVidsFetched.text(`Found ${totalVids} videos to add to bins.`);
+                        //totalVidsEl.text(c.toString());
 
                         if (maxCount !== undefined && c >= maxCount)
                             break; // done processing vids for this chan
-                        break; //XXX
                     }
                 }
                 catch(err) {
-                    this._app.handleError(err);
-                    return;
+                    if (err instanceof YT.Exception && err.ytError.error.code == 404) {
+                        // Flag the channnel, but keep processing
+                        this._app.addError('No such channel', `YouTube says the channel ${chanName} <https://www.youtube.com/channel/${chanId}/> has no "uploads" playlist.`);
+                        summ.addClass('error-occurred');
+                    }
+                    else {
+                        this._app.handleError(err);
+                        return;
+                    }
                 }
             }
-            // XXX
-            if (chanCnt >= 15)
-                break;
         }
 
         // Cache our results!
