@@ -28,6 +28,7 @@ export const PlaylistItem = z.object({
     snippet: z.object({
         title: z.string(),
         publishedAt: z.optional(z.string().datetime()),
+        videoOwnerChannelId: z.optional(z.string()),
         videoOwnerChannelTitle: z.optional(z.string()),
         channelId: z.string(),
         channelTitle: z.string(),

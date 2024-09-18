@@ -52,9 +52,10 @@ export class SortVidsWidget extends AppWidget {
             p.text(name);
 
             $('<span>&nbsp;&nbsp;&nbsp;</span>').appendTo(summ);
-            let follow = $('<span><span>0</span> videos - <span>0</span> present (<span>0</span> rm, <span>0</span> kept), <snap>0</snap> added, <snap>0</snap> omit</span>').appendTo(summ);
+            let follow = $('<span><span>0</span> videos - <span>0</span> present (<span>0</span> rm, <span>0</span> kept), <span>0</span> added, <snap>0</snap> omit</span>').appendTo(summ);
             let spans = $('span', follow);
 
+            console.log(`spans length: ${spans.length}`);
             let cntNewTotal = $(spans[0]);
             let cntPres     = $(spans[1]);
             let cntKept     = $(spans[2]);
@@ -117,8 +118,8 @@ export class SortVidsWidget extends AppWidget {
                         present: true,
                         vidId: item.snippet.resourceId.videoId,
                         vidName: item.snippet.title,
-                        chanId: item.snippet.channelId,
-                        chanName: item.snippet.channelTitle,
+                        chanId: item.snippet.videoOwnerChannelId as string,
+                        chanName: item.snippet.videoOwnerChannelTitle as string,
                         destBins: new Set<string>,
                     };
                     mergeVidToAdd(vidsMixed, dateStr, vid);
@@ -142,6 +143,26 @@ export class SortVidsWidget extends AppWidget {
                 cntRem.text(countVidsToAdd(vidsRemove));
                 cntAdd.text(countVidsToAdd(vidsMixed, (x) => !x.present));
                 cntNoAdd.text(countVidsToAdd(vidsNoAdd));
+
+                // Add to <ul>s
+                for (let ds in vidsNoAdd) {
+                    for (let vid of vidsNoAdd[ds]) {
+                        makeListItem(vid).appendTo(ulNoAdd);
+                    }
+                }
+                // Add to <ul>s
+                for (let ds in vidsMixed) {
+                    for (let vid of vidsMixed[ds]) {
+                        makeListItem(vid).appendTo(ulMixed);
+                    }
+                }
+                // Add to <ul>s
+                for (let ds in vidsRemove) {
+                    for (let vid of vidsRemove[ds]) {
+                        makeListItem(vid).appendTo(ulRemove);
+                    }
+                }
+
             }
         } catch(err) {
             this.errorHandler(err);
@@ -152,3 +173,16 @@ export class SortVidsWidget extends AppWidget {
     }
 }
 
+function makeListItem(vid : VidsToAddRec) : JQHE {
+    let li = $('<li></li>')
+    let st = $('<strong></strong>').appendTo(li);
+    st.text(vid.vidName);
+    $('<span>&nbsp;</span>').appendTo(li);
+    let chan = $('<span></span>').appendTo(li);
+    let title = vid.chanName
+    chan.text(title);
+    if (vid.present)
+        li.addClass('present');
+
+    return li;
+}
