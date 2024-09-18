@@ -7,6 +7,7 @@ import { AppWidget } from './w-app'
 import { SubscriptionsWidget } from './w-subs'
 import { BinsEditWidget, BinsViewWidget } from './w-bins'
 import { GetChanVidsWidget } from './w-vids'
+import { SortVidsWidget } from './w-sort'
 
 export class MainWidget extends AppWidget {
     private _cacheP : JQuery<HTMLElement>;
@@ -79,6 +80,12 @@ export class MainWidget extends AppWidget {
         let calcBtn = $('<button>Find New Videos</button>')
             .appendTo(this._ec);
         this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app));
-        console.log(LS.vidsToAdd);
+
+        let vidsToAdd = LS.vidsToAdd
+        if (vidsToAdd !== undefined) {
+            let sortBtn = $('<button>Sort Found Videos</button>')
+                .appendTo(this._ec);
+            this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app));
+        }
     }
 }

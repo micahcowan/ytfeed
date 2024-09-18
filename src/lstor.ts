@@ -77,6 +77,14 @@ export default class LS {
         localStorage['ytfeed-chan-to-uploads'] = JSON.stringify(m,null,1);
     }
 
+    static getBinLimits(binId : string) {
+        // For now, just return "global" defaults
+        return {
+            maxCount: 250,
+            minDate: new Date(0),
+        };
+    }
+
     static getChannelLimits(chanId : string) {
         // For now, just return "global" defaults
         return {

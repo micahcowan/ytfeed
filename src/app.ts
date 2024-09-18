@@ -16,15 +16,38 @@ type BinAssignments = Record<string, {
     bins: Set<string>
 }>;
 
+export const VidsToAddRec = z.object({
+    present: z.optional( z.boolean() ),
+    vidId: z.string(),
+    vidName: z.string(),
+    chanId: z.string(),
+    chanName: z.string(),
+    destBins: z.array( z.string() ).transform((val) => new Set<string>(val)),
+});
+export type VidsToAddRec = z.infer<typeof VidsToAddRec>;
+
 export const VidsToAdd =
-    z.record( z.string(), z.array( z.object({
-        vidId: z.string(),
-        vidName: z.string(),
-        chanId: z.string(),
-        chanName: z.string(),
-        destBins: z.array( z.string() ).transform((val) => new Set<string>(val)),
-    })));
+    z.record( z.string(), z.array( VidsToAddRec ));
 export type VidsToAdd = z.infer<typeof VidsToAdd>;
+
+export function mergeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddRec) {
+    if (!(dateStr in v)) {
+        v[dateStr] = [];
+    }
+    v[dateStr].push(vid);
+}
+
+export type VtaFilter = (v : VidsToAddRec) => boolean;
+export function countVidsToAdd(v : VidsToAdd, txfm: VtaFilter = (x) => true) {
+    let c = 0;
+    for (let ds in v) {
+        for (let vid of v[ds]) {
+            if (txfm(vid))
+                ++c;
+        }
+    }
+    return c;
+}
 
 export const BinsStruct = z.object({
     "pl-names": z.record(z.string(), z.string()),
