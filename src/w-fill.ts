@@ -14,8 +14,6 @@ export class FillBinsWidget extends AppWidget {
     }
 
     async _doAsyncBinFilling() {
-        console.log('Before additions:');
-        console.log(localStorage['ytfeed-cached-vids-to-add']);
         let vidsToAdd = LS.vidsToAdd;
         let ec = this._ec;
         let tube = this._app.ytApi;
@@ -47,7 +45,6 @@ export class FillBinsWidget extends AppWidget {
                         $('<span class="isoDate"></span>').text(ds).prependTo(p);
 
                         let response : any = await tube.addVideo(bin, vid.vidId);
-                        console.log(response);
                         if (response.snippet.resourceId.videoId !== vid.vidId) {
                             this._app.addError(
                                 'Video Insert: RESPONSE UNRECOGNIZED',
@@ -75,8 +72,6 @@ export class FillBinsWidget extends AppWidget {
         finally {
             // Ensure our progress is saved to localStorage.
             LS.vidsToAdd = vidsToAdd;
-            console.log('After additions:');
-            console.log(localStorage['ytfeed-cached-vids-to-add']);
         }
     }
 }
