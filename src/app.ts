@@ -40,7 +40,6 @@ export function mergeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddRe
 export function removeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddRec) {
     let vids = v[dateStr];
     if (vids === undefined) {
-        console.log('invalid');
         return; // nothing to remove
     }
     for (let i = 0; i != vids.length; ++i) {
@@ -48,9 +47,6 @@ export function removeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddR
             vids.splice(i, 1); // remove
             if (vids.length == 0) {
                 delete v[dateStr];
-            }
-            else {
-                console.log('not deleted');
             }
             break;
         }

@@ -57,8 +57,6 @@ export class FillBinsWidget extends AppWidget {
 
                         numer.text(c);
                         addP.attr('display','block');
-                        // XXX
-                        throw "boo";
 
                         // HERE'S THE NETWORK CALL
                         let response : any = await tube.addVideo(bin, vid.vidId);

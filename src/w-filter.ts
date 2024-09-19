@@ -81,7 +81,8 @@ export class FilterVidsWidget extends AppWidget {
         await requestBatcher.finish();
         loading.remove();
         //LS.vidsToAdd = vidsToAdd; // update
-        $(`<p>To-add videos NOTNOT reduced to ${countVidsToAdd(vidsToAdd)}</p>`).appendTo(no);
+        $(`<p>To-add videos reduced to ${countVidsToAdd(vidsToAdd)}</p>`).appendTo(no);
+        LS.vidsToAdd = vidsToAdd; // Update!
     }
 }
 
@@ -108,12 +109,12 @@ class RequestBatcher {
         vidbin[vid.vidId] = { ds: ds, vta: vid };
 
         if (++this._count == 50) { // max per page in YouTube API
-            this._doRequest();
+            await this._doRequest();
         }
     }
 
     async finish() {
-        this._doRequest();
+        await this._doRequest();
     }
 
     protected async _doRequest() {
