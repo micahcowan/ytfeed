@@ -94,6 +94,10 @@ export class Api {
         return new ChannelsList(this, ids);
     }
 
+    getVideos(ids : string[]) : AsyncIterable<Video> {
+        return new VideosList(this, ids);
+    }
+
     async _getToken() : Promise<string> {
         if (LS.token === undefined || LS.tokenExpired) {
             await this._refreshToken();
@@ -220,6 +224,37 @@ export class ChannelsList implements AsyncIterable<Channel> {
             for await (let page of pager) {
                 for await (let item of page.items) {
                     yield Channel.parse(item);
+                }
+            }
+        }
+    }
+
+    constructor(yt : Api, ids : string[]) {
+        this._yt = yt;
+        this._ids = ids;
+    }
+}
+
+export class VideosList implements AsyncIterable<Video> {
+    protected _yt : Api;
+    private _ids : string[];
+
+    async *[Symbol.asyncIterator]() {
+        let ids = this._ids;
+        while (ids.length > 0) {
+            let batch = ids.splice(0, 50);
+            let pager = new PagedRequestIterator(this._yt, {
+                path: 'videos',
+                params: {
+                    id: batch.join(),
+                    part: 'snippet,contentDetails',
+                    maxResults: '50',
+                }
+            });
+
+            for await (let page of pager) {
+                for await (let item of page.items) {
+                    yield Video.parse(item);
                 }
             }
         }
@@ -378,6 +413,16 @@ export const Channel = z.object({
     }),
 });
 export type Channel = z.infer<typeof Channel>;
+
+export const Video = z.object({
+    id: z.string(),
+    snippet: z.object({
+    }),
+    contentDetails: z.object({
+        duration: z.optional( z.string() ),
+    }),
+});
+export type Video = z.infer<typeof Video>;
 
 export const SubscriptionItem = z.object({
     snippet: z.object({

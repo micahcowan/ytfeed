@@ -7,6 +7,7 @@ import { AppWidget } from './w-app'
 import { SubscriptionsWidget } from './w-subs'
 import { BinsEditWidget, BinsViewWidget } from './w-bins'
 import { GetChanVidsWidget } from './w-vids'
+import { FilterVidsWidget } from './w-filter'
 import { SortVidsWidget } from './w-sort'
 import { FillBinsWidget  }from './w-fill'
 
@@ -84,7 +85,11 @@ export class MainWidget extends AppWidget {
 
         let vidsToAdd = LS.vidsToAdd
         if (vidsToAdd !== undefined) {
-            let sortBtn = $('<button>Sort Found Videos</button>')
+            let filterBtn = $('<button>Filter Found Videos</button>')
+                .appendTo(this._ec);
+            this.makeSingleSpawner(filterBtn, () => new FilterVidsWidget(this._app));
+
+            let sortBtn = $('<button>Preview Binning</button>')
                 .appendTo(this._ec);
             this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app));
 

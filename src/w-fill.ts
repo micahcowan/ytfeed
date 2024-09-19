@@ -43,7 +43,7 @@ export class FillBinsWidget extends AppWidget {
                 for (let vid of vidsToAdd[ds]) {
                     for (let bin of vid.destBins) {
                         let p = $('<p class="loading-desc">&nbsp<span>Attempting to add</span> video<br /><strong></strong> (<span class="yt-id"></span>) from channel <br /><strong></strong> (<span class="yt-id"></span>) to bin <br /><strong></strong> (<span></span>)</p>');
-                        p.appendTo(ec);
+                        p.prependTo(ec);
                         let binName = names[bin];
 
                         let status = $($('span', p).get(0) as HTMLElement);

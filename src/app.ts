@@ -37,12 +37,32 @@ export function mergeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddRe
     v[dateStr].push(vid);
 }
 
+export function removeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddRec) {
+    let vids = v[dateStr];
+    if (vids === undefined) {
+        console.log('invalid');
+        return; // nothing to remove
+    }
+    for (let i = 0; i != vids.length; ++i) {
+        if (vids[i].vidId === vid.vidId) {
+            vids.splice(i, 1); // remove
+            if (vids.length == 0) {
+                delete v[dateStr];
+            }
+            else {
+                console.log('not deleted');
+            }
+            break;
+        }
+    }
+}
+
 export type VtaFilter = (v : VidsToAddRec) => boolean;
-export function countVidsToAdd(v : VidsToAdd, txfm: VtaFilter = (x) => true) {
+export function countVidsToAdd(v : VidsToAdd, filter: VtaFilter = (x) => true) {
     let c = 0;
     for (let ds in v) {
         for (let vid of v[ds]) {
-            if (txfm(vid))
+            if (filter(vid))
                 ++c;
         }
     }

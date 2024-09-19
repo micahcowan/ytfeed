@@ -5,7 +5,6 @@ import { App, BinsStruct, VidsToAdd, VidsToAddRec, mergeVidToAdd, countVidsToAdd
 import { WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
 import LS from './lstor'
-import * as YT from './youtube'
 
 type JQHE = JQuery<HTMLElement>;
 type SortVidsElems = {
