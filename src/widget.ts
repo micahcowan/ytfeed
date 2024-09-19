@@ -30,6 +30,7 @@ export class Widget {
     protected _cb? : JQuery<HTMLElement>;
     protected _sum : JQuery<HTMLElement>;
     protected _et : JQuery<HTMLElement>;
+    protected _no : JQuery<HTMLElement>;
     protected _ec : JQuery<HTMLElement>;
     private _evListeners : ( (ev? : WidgetCloseEvent) => void )[] = [];
 
@@ -108,6 +109,7 @@ export class Widget {
             this._cb = $('<button class="widget-close-button">X</button>').appendTo(whp);
             this._cb.click( () => this.close() );
         }
+        this._no = $('<div class="widget-contents-no-overflow" />').appendTo(dt);
         this._ec = $('<div class="widget-contents" />').appendTo(dt);
 
         if (args !== undefined) {

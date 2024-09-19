@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-import { App } from './app';
+import { App, countVidsToAdd } from './app';
 import LS from './lstor';
 import { AppWidget } from './w-app';
 import { WidgetArgs } from './widget';
@@ -15,16 +15,27 @@ export class FillBinsWidget extends AppWidget {
 
     async _doAsyncBinFilling() {
         let vidsToAdd = LS.vidsToAdd;
+        let no = this._no;
         let ec = this._ec;
         let tube = this._app.ytApi;
 
         if (vidsToAdd === undefined) {
             // How did we open this widget in the first place?
-            $('<p>No videos to add.</p>').appendTo(ec);
+            $('<p>No videos to add.</p>').appendTo(no);
             return;
         }
 
+        let addP = $('<p display="none">Adding video <span></span>/<span></span>...</p>').appendTo(no);
+        let numer = $($('span', addP)[0]);
+        let denom =  $($('span', addP)[1]);
+        let interP = $('<p display="none">Interrupted! <span></span> videos remaining to be added next time.</p>').appendTo(no);
+        let remainP = $($('span', interP)[0]);
+
+        let vidCount = countVidsToAdd(vidsToAdd);
+        denom.text(vidCount);
+
         // Oldest first
+        let c = 1;
         let names = LS.bins? LS.bins['pl-names'] : {};
         let sorter = (a : string, b :string) => ((new Date(a)).valueOf() - (new Date(b)).valueOf());
         try {
@@ -44,6 +55,12 @@ export class FillBinsWidget extends AppWidget {
                         $($('span', p).get(3) as HTMLElement).text(bin);
                         $('<span class="isoDate"></span>').text(ds).prependTo(p);
 
+                        numer.text(c);
+                        addP.attr('display','block');
+                        // XXX
+                        throw "boo";
+
+                        // HERE'S THE NETWORK CALL
                         let response : any = await tube.addVideo(bin, vid.vidId);
                         if (response.snippet.resourceId.videoId !== vid.vidId) {
                             this._app.addError(
@@ -59,6 +76,8 @@ export class FillBinsWidget extends AppWidget {
                         // Indicate the task is done
                         status.text('Successfully added');
                         p.removeClass('loading-desc');
+
+                        ++c;
                     } // bin
                 } // vid
 
@@ -72,6 +91,9 @@ export class FillBinsWidget extends AppWidget {
         finally {
             // Ensure our progress is saved to localStorage.
             LS.vidsToAdd = vidsToAdd;
+
+            interP.attr('display','block');
+            remainP.text(vidCount - c + 1);
         }
     }
 }
