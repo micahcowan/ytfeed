@@ -25,10 +25,10 @@ export class FillBinsWidget extends AppWidget {
             return;
         }
 
-        let addP = $('<p display="none">Adding video <span></span>/<span></span>...</p>').appendTo(no);
+        let addP = $('<p style="display: none">Adding video <span></span>/<span></span>...</p>').appendTo(no);
         let numer = $($('span', addP)[0]);
         let denom =  $($('span', addP)[1]);
-        let interP = $('<p display="none">Interrupted! <span></span> videos remaining to be added next time.</p>').appendTo(no);
+        let interP = $('<p style="display: none">Interrupted! <span></span> videos remaining to be added next time.</p>').appendTo(no);
         let remainP = $($('span', interP)[0]);
 
         let vidCount = countVidsToAdd(vidsToAdd);
@@ -56,7 +56,7 @@ export class FillBinsWidget extends AppWidget {
                         $('<span class="isoDate"></span>').text(ds).prependTo(p);
 
                         numer.text(c);
-                        addP.attr('display','block');
+                        addP.removeAttr('style');
 
                         // HERE'S THE NETWORK CALL
                         let response : any = await tube.addVideo(bin, vid.vidId);
@@ -90,7 +90,7 @@ export class FillBinsWidget extends AppWidget {
             // Ensure our progress is saved to localStorage.
             LS.vidsToAdd = vidsToAdd;
 
-            interP.attr('display','block');
+            interP.removeAttr('style');
             remainP.text(vidCount - c + 1);
         }
     }
