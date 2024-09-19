@@ -156,6 +156,18 @@ export class App {
 
     private _addYoutubeError(x : YT.Exception) {
         let err = x.ytError.error;
+        let finder = (x : any) => {
+            return x.reason !== undefined && x.reason === 'quotaExceeded';
+        }
+        if (err.code !== undefined && err.code == 403
+           && err.errors.find(finder) !== undefined) {
+            // Special handling of quota errors
+            this.addError(
+                'YouTube Quota Exceeded',
+                'Daily quota exceeded.\nSwap out the credentials, or wait until the next midnight.'
+            );
+            return;
+        }
         let w = new YtErrorWidget(this, {
             title: 'YouTube API Error',
             message: err.message,
