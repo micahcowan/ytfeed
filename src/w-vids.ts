@@ -198,7 +198,6 @@ export class GetChanVidsWidget extends AppWidget {
 
         // Cache our results!
         LS.vidsToAdd = vidsToAdd;
-        console.log(vidsToAdd)
     }
 }
 

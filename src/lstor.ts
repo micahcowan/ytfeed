@@ -89,13 +89,17 @@ export default class LS {
         //                                v  thirty days
         let dflDate = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
         let dflMs = dflDate.valueOf();
-        let minDate = localStorage['yt-feed-mindate'];
-        if (minDate === undefined) minDate = new Date(0);
+        let minDateStr = localStorage['yt-feed-mindate'];
+        let minDate = new Date(0);
+        if (minDateStr !== undefined) {
+            minDate = new Date(minDateStr);
+        }
         let minMs = minDate.valueOf();
+        let date = (minMs > dflMs)? minDate : dflDate;
 
         return {
             maxCount: 100,
-            minDate: (minMs > dflMs)? minDate : dflDate
+            minDate:  date
         };
     }
 
