@@ -5,6 +5,18 @@ import { BinsStruct, VidsToAdd } from './app'
 import * as YT from './youtube'
 
 export default class LS {
+    private static _listeners : (() => void)[] = [];
+
+    private static _fireUpdated() {
+        for (let li of this._listeners) {
+            li();
+        }
+    }
+
+    static addEventListener(kind : 'cacheUpdated', handler : () => void) {
+        this._listeners.push(handler);
+    }
+
     static get token() : string | undefined {
         return localStorage['ytfeed-access-token'];
     }
@@ -35,6 +47,7 @@ export default class LS {
     }
     static set subsCache(subs : YT.SubscriptionItem[]) {
         localStorage['ytfeed-subs-cache'] = JSON.stringify(subs);
+        LS._fireUpdated();
     }
 
     static get subsCacheDate() : Date {
@@ -46,6 +59,7 @@ export default class LS {
     }
     static set subsCacheDate(date : Date) {
         localStorage['ytfeed-subs-cache-date'] = date.toISOString();
+        LS._fireUpdated();
     }
 
     static get bins_json() : string | undefined {
@@ -122,6 +136,7 @@ export default class LS {
             localStorage['ytfeed-cached-vids-to-add']
                 = JSON.stringify(vidsToAdd,replacer,1);
         }
+        LS._fireUpdated();
     }
 
     static set minDate(d : Date) {

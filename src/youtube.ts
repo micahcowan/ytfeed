@@ -301,7 +301,6 @@ export class PlaylistItemList implements AsyncIterable<PlaylistItem> {
 export class SubscriptionList implements AsyncIterable<SubscriptionItem> {
     private _yt : Api;
     private _pager : AsyncIterable<RequestPage>;
-    private _listeners : (() => void)[] = [];
 
     constructor(yt : Api) {
         this._yt = yt;
@@ -328,16 +327,6 @@ export class SubscriptionList implements AsyncIterable<SubscriptionItem> {
         }
     }
 
-    private _fireUpdated() {
-        for (let li of this._listeners) {
-            li();
-        }
-    }
-
-    addEventListener(kind : 'cacheUpdated', handler : () => void) {
-        this._listeners.push(handler);
-    }
-
     getAsyncIter() {
         return this[Symbol.asyncIterator]();
     }
@@ -354,12 +343,10 @@ export class SubscriptionList implements AsyncIterable<SubscriptionItem> {
         }
         LS.subsCache = cache;
         LS.subsCacheDate = date;
-        this._fireUpdated();
     }
 
     invalidateCache() {
         LS.subsCache = [];
-        this._fireUpdated();
     }
 
     get cached() : boolean {

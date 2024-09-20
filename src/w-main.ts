@@ -13,6 +13,7 @@ import { FillBinsWidget  }from './w-fill'
 
 export class MainWidget extends AppWidget {
     private _cacheP : JQuery<HTMLElement>;
+    private _deetsDiv : JQuery<HTMLElement>;
 
     constructor(app: App, args?: WidgetArgs) {
         super(app, { closeable: false });
@@ -24,6 +25,7 @@ export class MainWidget extends AppWidget {
         this._doSubsView();
         this._doBinsView();
         this._doCalcFeeds();
+        this._deetsDiv = $('<div></div>').appendTo(this._no);
         this._doDetailsView();
     }
 
@@ -48,8 +50,14 @@ export class MainWidget extends AppWidget {
     }
 
     _doDetailsView() {
+        LS.addEventListener('cacheUpdated', () => { this._refreshDetailsView(); });
+        this._refreshDetailsView();
+    }
+
+    _refreshDetailsView() {
         let vidsToAdd = LS.vidsToAdd;
-        let infoP = $('<p></p>').appendTo(this._no);
+        this._deetsDiv.empty();
+        let infoP = $('<p></p>').appendTo(this._deetsDiv);
         if (vidsToAdd === undefined) {
             infoP.text('No fetched videos cache - fetch more.');
         } else {
@@ -61,7 +69,7 @@ export class MainWidget extends AppWidget {
             let vid = vidsToAdd[ds][0];
 
             let p = $('<p>&nbsp<span>Oldest video (next to be added:)</span> video<br /><strong></strong> (<span class="yt-id"></span>) from channel <br /><strong></strong> (<span class="yt-id"></span>)</p>');
-            p.appendTo(this._no);
+            p.appendTo(this._deetsDiv);
 
             let status = $($('span', p).get(0) as HTMLElement);
             $($('strong', p).get(0) as HTMLElement).text(vid.vidName);
@@ -74,7 +82,7 @@ export class MainWidget extends AppWidget {
             vid = vidsToAdd[ds][vidsToAdd[ds].length-1];
 
             p = $('<p>&nbsp<span>Newest video (last to be added:)</span> video<br /><strong></strong> (<span class="yt-id"></span>) from channel <br /><strong></strong> (<span class="yt-id"></span>)</p>');
-            p.appendTo(this._no);
+            p.appendTo(this._deetsDiv);
 
             status = $($('span', p).get(0) as HTMLElement);
             $($('strong', p).get(0) as HTMLElement).text(vid.vidName);
@@ -103,7 +111,7 @@ export class MainWidget extends AppWidget {
         this.makeSingleSpawner(update, () => new SubscriptionsWidget(app, 'update'));
 
         this._cacheUpdated();
-        tube.subscriptions.addEventListener(
+        LS.addEventListener(
             'cacheUpdated',
             () => { this._cacheUpdated(); },
         )
@@ -115,7 +123,7 @@ export class MainWidget extends AppWidget {
 
         let bins = $('<button>Edit Subscription Bins (JSON)</button>')
             .appendTo(this._no);
-        this.makeSingleSpawner(bins, () => new BinsEditWidget(this._app));
+
 
         let binsView = $('<button><strong>View Bin Contents</strong></button>')
             .appendTo(this._no);
