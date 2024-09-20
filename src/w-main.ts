@@ -20,6 +20,7 @@ export class MainWidget extends AppWidget {
 
         this._cacheP = $('<div></div>');
 
+        this._doTopView();
         this._doSubsView();
         this._doBinsView();
         this._doCalcFeeds();
@@ -36,6 +37,13 @@ export class MainWidget extends AppWidget {
         else {
             p.text('Subscriptions data is NOT cached.')
         }
+    }
+
+    _doTopView() {
+        let rmTokBtn = $('<button>Clear Access Token (refreshed app creds?)</button>').appendTo(this._no);
+        rmTokBtn.click(() => {
+            this._app.ytApi.clearToken();
+        })
     }
 
     _doSubsView() {

@@ -5,11 +5,10 @@ import { BinsStruct, VidsToAdd } from './app'
 import * as YT from './youtube'
 
 export default class LS {
-    static get token() : string {
-        return localStorage['ytfeed-access-token'] === undefined? ''
-             : localStorage['ytfeed-access-token'];
+    static get token() : string | undefined {
+        return localStorage['ytfeed-access-token'];
     }
-    static set token(s : string) {
+    static set token(s : string | undefined) {
         localStorage['ytfeed-access-token'] = s;
     }
 
@@ -25,7 +24,7 @@ export default class LS {
     }
 
     static get tokenExpired() : boolean {
-        return LS.tokenExpireDate_ms <= Date.now();
+        return LS.token === undefined || LS.tokenExpireDate_ms <= Date.now();
     }
 
     static get subsCache() : YT.SubscriptionItem[] {

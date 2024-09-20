@@ -98,11 +98,15 @@ export class Api {
         return new VideosList(this, ids);
     }
 
+    clearToken() {
+        LS.token = undefined;
+    }
+
     async _getToken() : Promise<string> {
         if (LS.token === undefined || LS.tokenExpired) {
             await this._refreshToken();
         }
-        return LS.token;
+        return LS.token === undefined? '' : LS.token;
     }
 
     async _refreshToken() {
