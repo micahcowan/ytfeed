@@ -95,6 +95,9 @@ export class App {
 
         $('<h1>YouTube Feed App</h1>').appendTo(body);
 
+        let notice = $('<div id="access-token-notice"></div>').appendTo(body);
+        notice.text('The YouTube API access token had expired, and has now been refreshed.');
+
         let errs = this._errsOuter = $('<div id="errors-container"/>');
         errs.appendTo(this._bodyElem);
         errs.html('<div id="errors-container-title">Errors</div>');
@@ -121,6 +124,9 @@ export class App {
         let p = this._params = this._getParams();
         if (p.error !== undefined) {
             this.addError('YouTube Callback Error', p.error);
+        }
+        if ('access_token' in p) {
+            $('#access-token-notice').css('display', 'block');
         }
         this.ytApi.handleParams(p);
         // Now remove the params from user view
