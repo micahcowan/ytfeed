@@ -205,7 +205,6 @@ export class App {
         }
         else if (w instanceof ErrorWidget) {
             parent = this._errsElem;
-            this._errsOuter.slideDown(); // unhide errors area
         }
         else {
             parent = this._widgetsElem;

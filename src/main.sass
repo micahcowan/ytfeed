@@ -32,8 +32,10 @@ h1
   white-space: nowrap
   overflow-x: hidden
 
-#errors-container
+#errors-container:has(#errors-container-inner:empty)
   display: none
+
+#errors-container
   position: relative
   margin: 0.5rem
   padding: 0.5rem
