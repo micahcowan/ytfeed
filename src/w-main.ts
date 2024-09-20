@@ -1,6 +1,6 @@
 import $ from 'jquery'
 
-import { App } from './app'
+import { App, countVidsToAdd } from './app'
 import LS from './lstor'
 import { Widget, WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
@@ -40,6 +40,14 @@ export class MainWidget extends AppWidget {
     }
 
     _doTopView() {
+        let vidsToAdd = LS.vidsToAdd;
+        let infoP = $('<p></p>').appendTo(this._no);
+        if (vidsToAdd !== undefined) {
+            let cnt = countVidsToAdd(vidsToAdd);
+            infoP.text(`There are ${cnt} cached videos ready to bin.`);
+        } else {
+            infoP.text('No fetched videos cache - fetch more.');
+        }
         let rmTokBtn = $('<button>Clear Access Token (refreshed app creds?)</button>').appendTo(this._no);
         rmTokBtn.click(() => {
             this._app.ytApi.clearToken();
