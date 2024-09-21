@@ -51,7 +51,7 @@ export class FilterVidsWidget extends AppWidget {
 
         // vv FIXME: should get these values from LS.
         let maxDur = moment.duration({minutes: 35});
-        let minDur = moment.duration({minutes: 1});
+        let minDur = moment.duration({minutes: 1, seconds: 2});
         let requestBatcher = new RequestBatcher(
             this._app.ytApi,
             (ds : string, vidToAdd: VidsToAddRec, vid : YT.Video) => {
