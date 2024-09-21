@@ -4,12 +4,14 @@ import { App, countVidsToAdd } from './app'
 import LS from './lstor'
 import { Widget, WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
-import { SubscriptionsWidget } from './w-subs'
-import { BinsEditWidget, BinsViewWidget } from './w-bins'
-import { GetChanVidsWidget } from './w-vids'
+import { SubscriptionsWidget } from './w-compare-subs'
+import { BinsEditWidget } from './w-edit-bins'
+import { GetChanVidsWidget } from './w-fetch-new'
 import { FilterVidsWidget } from './w-filter'
-import { SortVidsWidget } from './w-sort'
+import { SortVidsWidget } from './w-preview-binning'
 import { FillBinsWidget  }from './w-fill'
+
+let netEmoji = '\u{1F310}';
 
 export class MainWidget extends AppWidget {
     private _cacheP : JQuery<HTMLElement>;
@@ -21,9 +23,8 @@ export class MainWidget extends AppWidget {
 
         this._cacheP = $('<div></div>');
 
-        this._doTopView();
-        this._doSubsView();
-        this._doBinsView();
+        this._doCacheView();
+        this._doBinAssignsView();
         $('<div class="widget-section-heading">Playlist Feeder</div>').appendTo(this._no);
         this._feederDiv = $('<div></div>').appendTo(this._no);
         this._doFeederView();
@@ -42,7 +43,8 @@ export class MainWidget extends AppWidget {
         }
     }
 
-    _doTopView() {
+    _doCacheView() {
+        $('<div class="widget-section-heading">Cached Data</div>').appendTo(this._no);
         let rmTokBtn = $('<button>Clear Access Token (refreshed app creds?)</button>').appendTo(this._no);
         rmTokBtn.click(() => {
             this._app.ytApi.clearToken();
@@ -59,20 +61,20 @@ export class MainWidget extends AppWidget {
         let fd = this._feederDiv;
         fd.empty();
 
-        let calcBtn = $('<button>Find New Videos</button>')
+        let calcBtn = $(`<button>Fetch New Videos to Bin&nbsp;${netEmoji}</button>`)
             .appendTo(fd);
         this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app), Symbol.for('fetch new vids'));
 
         if (vidsToAdd !== undefined) {
-            let filterBtn = $('<button>Filter Found Videos</button>')
+            let filterBtn = $(`<button>Filter Found Videos&nbsp;${netEmoji}</button>`)
                 .appendTo(fd);
             this.makeSingleSpawner(filterBtn, () => new FilterVidsWidget(this._app), Symbol.for('filter-vids'));
 
-            let sortBtn = $('<button>Preview Binning</button>')
+            let sortBtn = $(`<button>Preview Video Additions/Removals&nbsp;${netEmoji}</button>`)
                 .appendTo(fd);
             this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app), Symbol.for('preview binning'));
 
-            let fillBtn = $('<button><strong>Fill the Bins!!!</strong></button>')
+            let fillBtn = $(`<button><strong>Fill the Bins!!!&nbsp;${netEmoji}</strong></button>`)
                 .appendTo(fd);
             this.makeSingleSpawner(fillBtn, () => new FillBinsWidget(this._app), Symbol.for('do the fills'));
         }
@@ -119,22 +121,36 @@ export class MainWidget extends AppWidget {
         }
     }
 
-    _doSubsView() {
+    _doBinAssignsView() {
         let app = this._app;
         let tube = this._app.ytApi;
-        $('<div class="widget-section-heading">Subscriptions</div>').appendTo(this._no);
+        let no = this._no;
 
-        this._cacheP.appendTo(this._no);
-        let inv = $('<button>Delete Cache</button>').appendTo(this._no)
+        $('<div class="widget-section-heading">Bin Assignments</div>').appendTo(no);
+        this._cacheP.appendTo(no);
+
+        let bins = $('<button>Edit Bin Assignments (JSON)</button>')
+            .appendTo(no);
+        this.makeSingleSpawner(bins, () => new BinsEditWidget(this._app));
+
+        $('<br />').appendTo(no);
+        /*
+        let binsView = $('<button><strong>View Bin Contents</strong></button>')
+            .appendTo(no);
+        this.makeSingleSpawner(binsView, () => new BinsViewWidget(this._app));
+        */
+        /*
+        let inv = $('<button>Delete Cache</button>').appendTo(no)
             .click(() => { tube.subscriptions.invalidateCache(); });
+        */
 
-        let button = $('<button>View (Cached?) Subscriptions</button>')
-            .appendTo(this._no);
-        this.makeSingleSpawner(button, () => new SubscriptionsWidget(app));
-
-        let update = $('<button>View Subscriptions (<strong>Update Cache</strong>)</button>')
-            .appendTo(this._no);
+        let update = $(`<button>Compare Bin Assignments with Subscriptions&nbsp;${netEmoji}</button>`)
+            .appendTo(no);
         this.makeSingleSpawner(update, () => new SubscriptionsWidget(app, 'update'));
+
+        let button = $('<button>Show cached Bin Assignments/Subscriptions</button>')
+            .appendTo(no);
+        this.makeSingleSpawner(button, () => new SubscriptionsWidget(app));
 
         this._cacheUpdated();
         LS.addEventListener(
@@ -142,18 +158,4 @@ export class MainWidget extends AppWidget {
             () => { this._cacheUpdated(); },
         )
     }
-
-    _doBinsView() {
-        let no = this._no;
-        $('<div class="widget-section-heading">Bins</div>').appendTo(no);
-
-        let bins = $('<button>Edit Subscription Bins (JSON)</button>')
-            .appendTo(this._no);
-        this.makeSingleSpawner(bins, () => new BinsEditWidget(this._app));
-
-        let binsView = $('<button><strong>View Bin Contents</strong></button>')
-            .appendTo(this._no);
-        this.makeSingleSpawner(binsView, () => new BinsViewWidget(this._app));
-    }
-
 }
