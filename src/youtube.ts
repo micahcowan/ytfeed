@@ -171,11 +171,11 @@ export class Api {
     }
 
     async postRequest(args: RequestArgs) : Promise<object> {
-        return this.doRequest('POST', args);
+        return await this.doRequest('POST', args);
     }
 
     async getRequest(args: RequestArgs) : Promise<object> {
-        return this.doRequest('GET', args);
+        return await this.doRequest('GET', args);
     }
 
     async addVideo(bin : string, vidId :string) {
