@@ -26,7 +26,7 @@ export class WidgetCloseEvent {
 }
 
 export class Widget {
-    private _openSubs : Record<symbol, { widget: Widget, button: JQuery<HTMLElement> }> = {};
+    private _openSubs : Record<symbol, { widget: Widget, button: JQuery<HTMLElement>, closer: () => void }> = {};
     protected _ew : JQuery<HTMLElement>;
     protected _cb? : JQuery<HTMLElement>;
     protected _sum : JQuery<HTMLElement>;
@@ -85,7 +85,7 @@ export class Widget {
     }
 
     protected _closeReceived(handle : symbol) {
-        this._openSubs[handle].button.removeAttr('disabled');
+        this._openSubs[handle].closer();
         delete this._openSubs[handle];
     }
 
@@ -93,22 +93,27 @@ export class Widget {
                                 makeFn : () => Widget,
                                 handle : symbol = Symbol(),
                                 closeHandler? : () => void) : symbol {
-        if (handle in this._openSubs) {
-            button.attr('disabled','disabled');
-            this._openSubs[handle].button = button;
-        }
-
         if (closeHandler === undefined) {
             closeHandler = () => {
                 button.removeAttr('disabled');
             };
         }
 
+        if (handle in this._openSubs) {
+            button.attr('disabled','disabled');
+            this._openSubs[handle].button = button;
+            this._openSubs[handle].closer = closeHandler;
+        }
+
         button.click(
             () => {
-                closeHandler();
+                button.attr('disabled','disabled');
                 let subW = makeFn();
-                this._openSubs[handle] = { widget: subW, button: button };
+                this._openSubs[handle] = {
+                    widget: subW,
+                    button: button,
+                    closer: closeHandler,
+                };
                 subW.addEventListener('close', () => { this._closeReceived(handle); });
             }
         );
