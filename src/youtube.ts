@@ -3,8 +3,6 @@ import { z, ZodError } from 'zod';
 
 import LS from './lstor'
 
-const TESTING=false
-
 //-------------------- ZOD types --------------------
 export const Suberror = z.object({
     message: z.string(),
@@ -304,9 +302,8 @@ export class SubscriptionList implements AsyncIterable<SubscriptionItem> {
 
     constructor(yt : Api) {
         this._yt = yt;
-        this._pager = TESTING ?
-            new DummyPagedRequestIterator
-          : new PagedRequestIterator(yt, {
+        this._pager = 
+            new PagedRequestIterator(yt, {
                 path: 'subscriptions',
                 params: {
                     mine: "true",
@@ -355,16 +352,6 @@ export class SubscriptionList implements AsyncIterable<SubscriptionItem> {
 
     get cacheDate() : Date {
         return LS.subsCacheDate;
-    }
-}
-
-class DummyPagedRequestIterator implements AsyncIterable<RequestPage> {
-    async *[Symbol.asyncIterator]() {
-        for (let i = 0; i != 8; ++i) {
-            let _p = await $.ajax(`./scratch/subs${i}.json`)
-                       .catch((x) => {throw JSON.stringify(x)});
-            yield RequestPage.parse(_p);
-        }
     }
 }
 
