@@ -20,11 +20,12 @@ export class AppWidget extends Widget {
     };
 
     protected makeSingleSpawner(button : JQuery<HTMLElement>,
-                                makeFn : () => Widget) {
-        super.makeSingleSpawner(button, () => {
+                                makeFn : () => Widget,
+                                handle? : symbol) : symbol {
+        return super.makeSingleSpawner(button, () => {
             let subW = makeFn();
             this._app.insertAfterWidget(subW, this.element);
             return subW;
-        });
+        }, handle);
     }
 }

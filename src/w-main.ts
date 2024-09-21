@@ -13,7 +13,7 @@ import { FillBinsWidget  }from './w-fill'
 
 export class MainWidget extends AppWidget {
     private _cacheP : JQuery<HTMLElement>;
-    private _deetsDiv : JQuery<HTMLElement>;
+    private _feederDiv : JQuery<HTMLElement>;
 
     constructor(app: App, args?: WidgetArgs) {
         super(app, { closeable: false });
@@ -24,9 +24,9 @@ export class MainWidget extends AppWidget {
         this._doTopView();
         this._doSubsView();
         this._doBinsView();
-        this._doCalcFeeds();
-        this._deetsDiv = $('<div></div>').appendTo(this._no);
-        this._doDetailsView();
+        $('<div class="widget-section-heading">Playlist Feeder</div>').appendTo(this._no);
+        this._feederDiv = $('<div></div>').appendTo(this._no);
+        this._doFeederView();
     }
 
     _cacheUpdated() {
@@ -49,22 +49,42 @@ export class MainWidget extends AppWidget {
         })
     }
 
-    _doDetailsView() {
-        LS.addEventListener('cacheUpdated', () => { this._refreshDetailsView(); });
-        this._refreshDetailsView();
+    _doFeederView() {
+        LS.addEventListener('cacheUpdated', () => { this._refreshFeederView(); });
+        this._refreshFeederView();
     }
 
-    _refreshDetailsView() {
+    _refreshFeederView() {
         let vidsToAdd = LS.vidsToAdd;
-        this._deetsDiv.empty();
-        let infoP = $('<p></p>').appendTo(this._deetsDiv);
+        let fd = this._feederDiv;
+        fd.empty();
+
+        let calcBtn = $('<button>Find New Videos</button>')
+            .appendTo(fd);
+        this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app), Symbol.for('fetch new vids'));
+
+        if (vidsToAdd !== undefined) {
+            let filterBtn = $('<button>Filter Found Videos</button>')
+                .appendTo(fd);
+            this.makeSingleSpawner(filterBtn, () => new FilterVidsWidget(this._app), Symbol.for('filter-vids'));
+
+            let sortBtn = $('<button>Preview Binning</button>')
+                .appendTo(fd);
+            this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app), Symbol.for('preview binning'));
+
+            let fillBtn = $('<button><strong>Fill the Bins!!!</strong></button>')
+                .appendTo(fd);
+            this.makeSingleSpawner(fillBtn, () => new FillBinsWidget(this._app), Symbol.for('do the fills'));
+        }
+
+        let infoP = $('<p></p>').appendTo(fd);
         if (vidsToAdd === undefined) {
             infoP.text('No fetched videos cache - fetch more.');
         } else {
             let cnt = countVidsToAdd(vidsToAdd);
             if (cnt === 0) {
                 LS.vidsToAdd = undefined;
-                this._refreshDetailsView(); // restart
+                this._refreshFeederView(); // restart
                 return
             }
 
@@ -75,7 +95,7 @@ export class MainWidget extends AppWidget {
             let vid = vidsToAdd[ds][0];
 
             let p = $('<p>&nbsp<span>Oldest video (next to be added:)</span> video<br /><strong></strong> (<span class="yt-id"></span>) from channel <br /><strong></strong> (<span class="yt-id"></span>)</p>');
-            p.appendTo(this._deetsDiv);
+            p.appendTo(fd);
 
             let status = $($('span', p).get(0) as HTMLElement);
             $($('strong', p).get(0) as HTMLElement).text(vid.vidName);
@@ -88,7 +108,7 @@ export class MainWidget extends AppWidget {
             vid = vidsToAdd[ds][vidsToAdd[ds].length-1];
 
             p = $('<p>&nbsp<span>Newest video (last to be added:)</span> video<br /><strong></strong> (<span class="yt-id"></span>) from channel <br /><strong></strong> (<span class="yt-id"></span>)</p>');
-            p.appendTo(this._deetsDiv);
+            p.appendTo(fd);
 
             status = $($('span', p).get(0) as HTMLElement);
             $($('strong', p).get(0) as HTMLElement).text(vid.vidName);
@@ -136,27 +156,4 @@ export class MainWidget extends AppWidget {
         this.makeSingleSpawner(binsView, () => new BinsViewWidget(this._app));
     }
 
-    _doCalcFeeds() {
-        let no = this._no;
-        $('<div class="widget-section-heading">Playlist Feeder</div>').appendTo(no);
-
-        let calcBtn = $('<button>Find New Videos</button>')
-            .appendTo(this._no);
-        this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app));
-
-        let vidsToAdd = LS.vidsToAdd
-        if (vidsToAdd !== undefined) {
-            let filterBtn = $('<button>Filter Found Videos</button>')
-                .appendTo(this._no);
-            this.makeSingleSpawner(filterBtn, () => new FilterVidsWidget(this._app));
-
-            let sortBtn = $('<button>Preview Binning</button>')
-                .appendTo(this._no);
-            this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app));
-
-            let fillBtn = $('<button><strong>Fill the Bins!!!</strong></button>')
-                .appendTo(this._no);
-            this.makeSingleSpawner(fillBtn, () => new FillBinsWidget(this._app));
-        }
-    }
 }
