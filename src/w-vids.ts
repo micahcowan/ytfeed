@@ -10,6 +10,8 @@ import { AppWidget } from './w-app'
 type JQHE = JQuery<HTMLElement>;
 
 export class GetChanVidsWidget extends AppWidget {
+    _stopped : boolean = false;
+    _stopBtn : JQHE;
     _loading : JQHE;
     _pCached : JQHE;
     _pToFetch : JQHE;
@@ -20,6 +22,9 @@ export class GetChanVidsWidget extends AppWidget {
     constructor(app : App, args? : WidgetArgs) {
         super(app, args);
         this.setTitle('Find Vids');
+
+        this._stopBtn = $('<button>Cancel</button>').appendTo(this._no);
+        this._stopBtn.click( () => { this._stopped = true; } );
 
         let ec = this._ec
         let loading = $('<div class="loading">loading...</div>').appendTo(ec);
@@ -118,6 +123,12 @@ export class GetChanVidsWidget extends AppWidget {
         let vidsToAdd : VidsToAdd = {};
         for (let chanName of Object.keys(chanMap).sort()) {
             for (let chanId in chanMap[chanName]) { // usually just one
+                if (this._stopped) {
+                    $('<p>CANCELLED by user.</p>').appendTo(this._no);
+                    return; // without saving to cache:
+                            // bc we won't have gotten to the oldest
+                            // vids yet, and channels will be lopsided
+                }
                 ++chanCnt;
                 let uploads = chanToUp[chanId];
 

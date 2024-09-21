@@ -6,6 +6,8 @@ import { AppWidget } from './w-app';
 import { WidgetArgs } from './widget';
 
 export class FillBinsWidget extends AppWidget {
+    private _stopped = false;
+
     constructor(app : App, wargs? : WidgetArgs) {
         super(app, wargs);
         this.setTitle('Fill the Bins (with videos!)');
@@ -25,6 +27,9 @@ export class FillBinsWidget extends AppWidget {
             return;
         }
 
+        let stopBtn = $('<button>Stop</button>').appendTo(no);
+        stopBtn.click( () => { this._stopped = true; } );
+
         let addP = $('<p style="display: none">Adding video <span></span>/<span></span>...</p>').appendTo(no);
         let numer = $($('span', addP)[0]);
         let denom =  $($('span', addP)[1]);
@@ -39,8 +44,12 @@ export class FillBinsWidget extends AppWidget {
         let names = LS.bins? LS.bins['pl-names'] : {};
         let sorter = (a : string, b :string) => ((new Date(a)).valueOf() - (new Date(b)).valueOf());
         try {
-            for (let ds of Object.keys(vidsToAdd).sort(sorter)) {
+            outLoop: for (let ds of Object.keys(vidsToAdd).sort(sorter)) {
                 for (let vid of vidsToAdd[ds]) {
+                    if (this._stopped) {
+                        $('<p>STOPPED by user.</p>').appendTo(no);
+                        break outLoop;
+                    }
                     for (let bin of vid.destBins) {
                         let p = $('<p class="loading-desc">&nbsp<span>Attempting to add</span> video<br /><strong></strong> (<span class="yt-id"></span>) from channel <br /><strong></strong> (<span class="yt-id"></span>) to bin <br /><strong></strong> (<span></span>)</p>');
                         p.prependTo(ec);
@@ -59,6 +68,9 @@ export class FillBinsWidget extends AppWidget {
                         addP.removeAttr('style');
 
                         // HERE'S THE NETWORK CALL
+                        // NOTE: If we add multiplexed network calls
+                        // here, make sure the Stop button lets
+                        // currently-in-flight network calls finish up
                         let response : any = await tube.addVideo(bin, vid.vidId);
                         if (response.snippet.resourceId.videoId !== vid.vidId) {
                             this._app.addError(
