@@ -129,7 +129,7 @@ export class MainWidget extends AppWidget {
 
         let bins = $('<button>Edit Subscription Bins (JSON)</button>')
             .appendTo(this._no);
-
+        this.makeSingleSpawner(bins, () => new BinsEditWidget(this._app));
 
         let binsView = $('<button><strong>View Bin Contents</strong></button>')
             .appendTo(this._no);
