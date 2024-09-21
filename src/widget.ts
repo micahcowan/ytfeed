@@ -91,18 +91,22 @@ export class Widget {
 
     protected makeSingleSpawner(button : JQuery<HTMLElement>,
                                 makeFn : () => Widget,
-                                handle : symbol = Symbol()) : symbol {
+                                handle : symbol = Symbol(),
+                                closeHandler? : () => void) : symbol {
         if (handle in this._openSubs) {
             button.attr('disabled','disabled');
             this._openSubs[handle].button = button;
         }
-        else {
-            button.removeAttr('disabled');
+
+        if (closeHandler === undefined) {
+            closeHandler = () => {
+                button.removeAttr('disabled');
+            };
         }
 
         button.click(
             () => {
-                button.attr('disabled','disabled');
+                closeHandler();
                 let subW = makeFn();
                 this._openSubs[handle] = { widget: subW, button: button };
                 subW.addEventListener('close', () => { this._closeReceived(handle); });

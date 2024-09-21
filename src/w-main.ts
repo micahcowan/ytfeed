@@ -65,19 +65,37 @@ export class MainWidget extends AppWidget {
             .appendTo(fd);
         this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app), Symbol.for('fetch new vids'));
 
-        if (vidsToAdd !== undefined) {
-            let filterBtn = $(`<button>Filter Found Videos&nbsp;${netEmoji}</button>`)
-                .appendTo(fd);
-            this.makeSingleSpawner(filterBtn, () => new FilterVidsWidget(this._app), Symbol.for('filter-vids'));
-
-            let sortBtn = $(`<button>Preview Video Additions/Removals&nbsp;${netEmoji}</button>`)
-                .appendTo(fd);
-            this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app), Symbol.for('preview binning'));
-
-            let fillBtn = $(`<button><strong>Fill the Bins!!!&nbsp;${netEmoji}</strong></button>`)
-                .appendTo(fd);
-            this.makeSingleSpawner(fillBtn, () => new FillBinsWidget(this._app), Symbol.for('do the fills'));
+        let makeEnabler = (button : JQuery<HTMLElement>) => {
+            return () => {
+                if (LS.vidsToAdd === undefined) {
+                    // leave disabled
+                    button.attr('disabled', 'disabled');
+                }
+                else {
+                    // enable
+                    button.removeAttr('disabled');
+                }
+            }
         }
+
+        let enabler;
+        let filterBtn = $(`<button>Filter Found Videos&nbsp;${netEmoji}</button>`)
+            .appendTo(fd);
+        enabler = makeEnabler(filterBtn);
+        enabler();
+        this.makeSingleSpawner(filterBtn, () => new FilterVidsWidget(this._app), Symbol.for('filter-vids'), enabler);
+
+        let sortBtn = $(`<button>Preview Video Additions/Removals&nbsp;${netEmoji}</button>`)
+            .appendTo(fd);
+        enabler = makeEnabler(sortBtn);
+        enabler();
+        this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app), Symbol.for('preview binning'), enabler);
+
+        let fillBtn = $(`<button><strong>Fill the Bins!!!&nbsp;${netEmoji}</strong></button>`)
+            .appendTo(fd);
+        enabler = makeEnabler(fillBtn);
+        enabler();
+        this.makeSingleSpawner(fillBtn, () => new FillBinsWidget(this._app), Symbol.for('do the fills'), enabler);
 
         let infoP = $('<p></p>').appendTo(fd);
         if (vidsToAdd === undefined) {
