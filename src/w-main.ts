@@ -62,6 +62,12 @@ export class MainWidget extends AppWidget {
             infoP.text('No fetched videos cache - fetch more.');
         } else {
             let cnt = countVidsToAdd(vidsToAdd);
+            if (cnt === 0) {
+                LS.vidsToAdd = undefined;
+                this._refreshDetailsView(); // restart
+                return
+            }
+
             infoP.text(`There are ${cnt} cached videos ready to bin.`);
 
             let keys = Object.keys(vidsToAdd).sort();
