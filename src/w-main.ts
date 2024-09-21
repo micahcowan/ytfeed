@@ -4,11 +4,11 @@ import { App, countVidsToAdd } from './app'
 import LS from './lstor'
 import { Widget, WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
-import { SubscriptionsWidget } from './w-compare-subs'
+import { CompareBinsSubsWidget } from './w-compare-subs'
 import { BinsEditWidget } from './w-edit-bins'
-import { GetChanVidsWidget } from './w-fetch-new'
+import { FetchVidsWidget } from './w-fetch-new'
 import { FilterVidsWidget } from './w-filter'
-import { SortVidsWidget } from './w-preview-binning'
+import { PreviewAddRmWidget } from './w-preview-binning'
 import { FillBinsWidget  }from './w-fill'
 
 let netEmoji = '\u{1F310}';
@@ -63,7 +63,7 @@ export class MainWidget extends AppWidget {
 
         let calcBtn = $(`<button>Fetch New Videos to Bin&nbsp;${netEmoji}</button>`)
             .appendTo(fd);
-        this.makeSingleSpawner(calcBtn, () => new GetChanVidsWidget(this._app), Symbol.for('fetch new vids'));
+        this.makeSingleSpawner(calcBtn, () => new FetchVidsWidget(this._app), Symbol.for('fetch new vids'));
 
         let makeEnabler = (button : JQuery<HTMLElement>) => {
             return () => {
@@ -89,7 +89,7 @@ export class MainWidget extends AppWidget {
             .appendTo(fd);
         enabler = makeEnabler(sortBtn);
         enabler();
-        this.makeSingleSpawner(sortBtn, () => new SortVidsWidget(this._app), Symbol.for('preview binning'), enabler);
+        this.makeSingleSpawner(sortBtn, () => new PreviewAddRmWidget(this._app), Symbol.for('preview binning'), enabler);
 
         let fillBtn = $(`<button><strong>Fill the Bins!!!&nbsp;${netEmoji}</strong></button>`)
             .appendTo(fd);
@@ -164,11 +164,11 @@ export class MainWidget extends AppWidget {
 
         let update = $(`<button>Compare Bin Assignments with Subscriptions&nbsp;${netEmoji}</button>`)
             .appendTo(no);
-        this.makeSingleSpawner(update, () => new SubscriptionsWidget(app, 'update'));
+        this.makeSingleSpawner(update, () => new CompareBinsSubsWidget(app, 'update'));
 
         let button = $('<button>Show cached Bin Assignments/Subscriptions</button>')
             .appendTo(no);
-        this.makeSingleSpawner(button, () => new SubscriptionsWidget(app));
+        this.makeSingleSpawner(button, () => new CompareBinsSubsWidget(app));
 
         this._cacheUpdated();
         LS.addEventListener(

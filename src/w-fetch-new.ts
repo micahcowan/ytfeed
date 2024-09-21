@@ -9,7 +9,7 @@ import { AppWidget } from './w-app'
 
 type JQHE = JQuery<HTMLElement>;
 
-export class GetChanVidsWidget extends AppWidget {
+export class FetchVidsWidget extends AppWidget {
     _stopped : boolean = false;
     _stopBtn : JQHE;
     _loading : JQHE;
@@ -21,7 +21,7 @@ export class GetChanVidsWidget extends AppWidget {
 
     constructor(app : App, args? : WidgetArgs) {
         super(app, args);
-        this.setTitle('Find Vids');
+        this.setTitle('Fetch New Videos');
 
         this._stopBtn = $('<button>Cancel</button>').appendTo(this._no);
         this._stopBtn.click( () => { this._stopped = true; } );

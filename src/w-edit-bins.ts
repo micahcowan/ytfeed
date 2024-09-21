@@ -13,7 +13,7 @@ export class BinsEditWidget extends AppWidget {
 
     constructor(app: App, args?: WidgetArgs) {
         super(app, args);
-        this.setTitle('Edit Bins (JSON)');
+        this.setTitle('Edit Bin Assignments (JSON)');
 
         let ec = this._ec;
         let ta = this._ta = $('<textarea></textarea>').appendTo(ec);

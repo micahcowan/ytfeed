@@ -4,12 +4,12 @@ import { App } from './app'
 import { AppWidget } from './w-app'
 import * as YT from './youtube'
 
-export class SubscriptionsWidget extends AppWidget {
+export class CompareBinsSubsWidget extends AppWidget {
     _update : boolean;
 
     constructor(app: App, update? : 'update') {
         super(app);
-        this.setTitle('Subscriptions');
+        this.setTitle('Compare Bins/Subscriptions');
         this._update = update === 'update';
 
         this._asyncDoSubscriptions().catch(this.errorHandler);

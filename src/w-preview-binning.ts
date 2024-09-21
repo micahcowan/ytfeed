@@ -19,13 +19,13 @@ type SortVidsElems = {
     ulRemove: JQHE,
     summ: JQHE
 };
-export class SortVidsWidget extends AppWidget {
+export class PreviewAddRmWidget extends AppWidget {
     _binEls : Record<string, SortVidsElems> = {};
     _binNames : Record<string, string>;
 
     constructor(app: App, args?: WidgetArgs) {
         super(app, args);
-        this.setTitle('Sort Found Videos (into Bins)');
+        this.setTitle('Preview Additions/Removals');
 
         let ec = this._ec;
         let binStruct = LS.bins;
