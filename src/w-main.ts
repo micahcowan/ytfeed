@@ -55,9 +55,12 @@ export class MainWidget extends AppWidget {
         let fd = this._feederDiv;
         fd.empty();
 
+        let flex = $('<div class="yt-feeder-buttons"></div>').appendTo(fd);
+
         let calcBtn = $(`<button>Fetch New Videos to Bin&nbsp;${netEmoji}</button>`)
-            .appendTo(fd);
+            .appendTo(flex);
         this.makeSingleSpawner(calcBtn, () => new FetchVidsWidget(this._app), Symbol.for('fetch new vids'));
+        $('<div class="arrow">&#x2193;</div>').appendTo(flex);
 
         let makeEnabler = (button : JQuery<HTMLElement>) => {
             return () => {
@@ -74,19 +77,21 @@ export class MainWidget extends AppWidget {
 
         let enabler;
         let filterBtn = $(`<button>Filter Found Videos&nbsp;${netEmoji}</button>`)
-            .appendTo(fd);
+            .appendTo(flex);
         enabler = makeEnabler(filterBtn);
         enabler();
         this.makeSingleSpawner(filterBtn, () => new FilterVidsWidget(this._app), Symbol.for('filter-vids'), enabler);
+        $('<div class="arrow">&#x2193;</div>').appendTo(flex);
 
         let sortBtn = $(`<button>Preview Video Additions/Removals&nbsp;${netEmoji}</button>`)
-            .appendTo(fd);
+            .appendTo(flex);
         enabler = makeEnabler(sortBtn);
         enabler();
         this.makeSingleSpawner(sortBtn, () => new PreviewAddRmWidget(this._app), Symbol.for('preview binning'), enabler);
+        $('<div class="arrow">&#x2193;</div>').appendTo(flex);
 
         let fillBtn = $(`<button><strong>Fill the Bins!!!&nbsp;${netEmoji}</strong></button>`)
-            .appendTo(fd);
+            .appendTo(flex);
         enabler = makeEnabler(fillBtn);
         enabler();
         this.makeSingleSpawner(fillBtn, () => new FillBinsWidget(this._app), Symbol.for('do the fills'), enabler);
