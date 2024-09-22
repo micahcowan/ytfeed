@@ -11,6 +11,8 @@ import { AppWidget } from './w-app'
 import { MainWidget } from './w-main'
 import { ErrorWidget, YtErrorWidget, ErrorWidgetArgs } from './w-error'
 
+export let netEmoji = '\u{1F310}';
+
 type BinAssignments = Record<string, {
     name: string,
     bins: Set<string>

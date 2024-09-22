@@ -1,6 +1,6 @@
 import $ from 'jquery'
 
-import { App, countVidsToAdd } from './app'
+import { App, countVidsToAdd, netEmoji } from './app'
 import LS from './lstor'
 import { Widget, WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
@@ -11,17 +11,13 @@ import { FilterVidsWidget } from './w-filter'
 import { PreviewAddRmWidget } from './w-preview-binning'
 import { FillBinsWidget  }from './w-fill'
 
-let netEmoji = '\u{1F310}';
-
 export class MainWidget extends AppWidget {
-    private _cacheP : JQuery<HTMLElement>;
     private _feederDiv : JQuery<HTMLElement>;
+    private _compareEmoji = $('<span></span>');
 
     constructor(app: App, args?: WidgetArgs) {
         super(app, { closeable: false });
         this.setTitle('Main');
-
-        this._cacheP = $('<div></div>');
 
         this._doCacheView();
         this._doBinAssignsView();
@@ -31,15 +27,13 @@ export class MainWidget extends AppWidget {
     }
 
     _cacheUpdated() {
-        let p = this._cacheP;
         let tube = this._app.ytApi;
 
         if (tube.subscriptions.cached) {
-            p.text('Subscriptions data was cached on '
-                   + tube.subscriptions.cacheDate);
+            this._compareEmoji.empty();
         }
         else {
-            p.text('Subscriptions data is NOT cached.')
+            this._compareEmoji.append( $(`<span>&nbsp;${netEmoji}</span>`) );
         }
     }
 
@@ -145,8 +139,6 @@ export class MainWidget extends AppWidget {
         let no = this._no;
 
         $('<div class="widget-section-heading">Bin Assignments</div>').appendTo(no);
-        this._cacheP.appendTo(no);
-
         let bins = $('<button>Edit Bin Assignments (JSON)</button>')
             .appendTo(no);
         this.makeSingleSpawner(bins, () => new BinsEditWidget(this._app));
@@ -162,15 +154,13 @@ export class MainWidget extends AppWidget {
             .click(() => { tube.subscriptions.invalidateCache(); });
         */
 
-        let update = $(`<button>Compare Bin Assignments with Subscriptions&nbsp;${netEmoji}</button>`)
+        let compare = $(`<button>Compare Bin Assignments with Subscriptions</button>`)
             .appendTo(no);
-        this.makeSingleSpawner(update, () => new CompareBinsSubsWidget(app, 'update'));
-
-        let button = $('<button>Show cached Bin Assignments/Subscriptions</button>')
-            .appendTo(no);
-        this.makeSingleSpawner(button, () => new CompareBinsSubsWidget(app));
-
+        this._compareEmoji.empty();
+        this._compareEmoji.appendTo(compare);
+        this.makeSingleSpawner(compare, () => new CompareBinsSubsWidget(app));
         this._cacheUpdated();
+
         LS.addEventListener(
             'cacheUpdated',
             () => { this._cacheUpdated(); },

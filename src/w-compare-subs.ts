@@ -1,41 +1,52 @@
 import $ from 'jquery'
 
-import { App } from './app'
+import { App, netEmoji } from './app'
 import { AppWidget } from './w-app'
 import * as YT from './youtube'
 
 export class CompareBinsSubsWidget extends AppWidget {
-    _update : boolean;
-
-    constructor(app: App, update? : 'update') {
+    constructor(app: App) {
         super(app);
         this.setTitle('Compare Bins/Subscriptions');
-        this._update = update === 'update';
 
         this._asyncDoSubscriptions().catch(this.errorHandler);
     }
 
-    private async _asyncDoSubscriptions() {
+    private async _asyncDoSubscriptions(useCache : boolean = true) {
         let tube = this._app.ytApi;
-        let w = this._ec;
+        let ec = this._ec;
+
+        ec.empty();
+
+        let woCacheBtn;
+        if (useCache && tube.subscriptions.cached) {
+            let p = $('<p></p>').appendTo(ec);
+            p.text('Using cached subscription data from '
+                   + tube.subscriptions.cacheDate);
+            woCacheBtn = $(`<button>Resync Subscriptions Data&nbsp;${netEmoji}</button>`);
+            woCacheBtn.attr('disabled', 'disabled');
+            woCacheBtn.click(() => { this._asyncDoSubscriptions(false).catch(this.errorHandler); });
+            woCacheBtn.appendTo(ec);
+        }
 
         let loading = $('<div class="loading">loading...</div>');
-        w.append(loading);
+        ec.append(loading);
 
         let x;
         x = $('<details open="open"><summary>UNKNOWN subscriptions</summary></details>')
-            .appendTo(w);
+            .appendTo(ec);
         let unkSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
         x = $('<details open="open"><summary>IGNORED subscriptions</summary></details>')
-            .appendTo(w);
+            .appendTo(ec);
         let ignSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
         x = $('<details><summary>ALL subscriptions</summary></details>')
-            .appendTo(w);
+            .appendTo(ec);
         let allSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
 
         let assign = this._app.getAssignedBins();
         let iter : AsyncIterable<YT.SubscriptionItem> = tube.subscriptions;
-        if (this._update) {
+        if (!useCache) {
+            console.log("not useCache");
             iter = tube.subscriptions.getAsyncUpdatedIterator();
         }
         for await (let chan of iter) {
@@ -67,5 +78,9 @@ export class CompareBinsSubsWidget extends AppWidget {
         p.insertBefore(loading);
 
         loading.remove();
+
+        if (woCacheBtn !== undefined) {
+            woCacheBtn.removeAttr('disabled');
+        }
     }
 }
