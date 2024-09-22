@@ -20,6 +20,7 @@ type BinAssignments = Record<string, {
 
 export const VidsToAddRec = z.object({
     present: z.optional( z.boolean() ),
+    plItemId: z.string(),
     vidId: z.string(),
     vidName: z.string(),
     chanId: z.string(),
@@ -49,7 +50,7 @@ export function removeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddR
         return; // nothing to remove
     }
     for (let i = 0; i != vids.length; ++i) {
-        if (vids[i].vidId === vid.vidId) {
+        if (vids[i].plItemId === vid.plItemId) {
             vids.splice(i, 1); // remove
             if (vids.length == 0) {
                 delete v[dateStr];
@@ -57,6 +58,14 @@ export function removeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddR
             break;
         }
     }
+}
+
+export function getOneRemovalVidForBin(v : VidsToRemove | undefined, bin : string) : { ds: string, rec: VidsToAddRec } | undefined {
+    if (v === undefined || !(bin in v)) return undefined;
+    let keys = Object.keys(v[bin]);
+    if (keys.length == 0) return undefined;
+    let firstDate = keys.sort()[0];
+    return { ds: firstDate, rec: v[bin][firstDate][0] }
 }
 
 export type VtaFilter = (v : VidsToAddRec) => boolean;

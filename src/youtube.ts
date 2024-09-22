@@ -24,6 +24,7 @@ export type YtError = z.infer<typeof Error>;
 
 export const PlaylistItem = z.object({
     snippet: z.object({
+        id: z.string(), // of playlistItem, NOT of video
         title: z.string(),
         publishedAt: z.optional(z.string().datetime()),
         videoOwnerChannelId: z.optional(z.string()),
@@ -51,7 +52,7 @@ export const RequestPage = z.object({
 export type RequestPage = z.infer<typeof RequestPage>;
 
 //
-type HttpMethod = 'GET' | 'POST' | 'PUT';
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 interface RequestArgs {
     path: string,
     params: Record<string, string>;
@@ -176,6 +177,10 @@ export class Api {
         return await this.doRequest('GET', args);
     }
 
+    async deleteRequest(args: RequestArgs) : Promise<object> {
+        return await this.doRequest('DELETE', args);
+    }
+
     async addVideo(bin : string, vidId :string) {
         let args : RequestArgs = {
             path: 'playlistItems',
@@ -195,6 +200,17 @@ export class Api {
             },
         }
         return await this.postRequest(args);
+    }
+
+    async removeVideo(plItemId : string) {
+        let args : RequestArgs = {
+            path: 'playlistItems',
+            accepts: 'application/json',
+            params: {
+                id: plItemId
+            },
+        }
+        return await this.deleteRequest(args);
     }
 
     handleParams(p : Record<string, string>) {

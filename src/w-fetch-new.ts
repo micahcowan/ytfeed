@@ -169,6 +169,7 @@ export class FetchVidsWidget extends AppWidget {
                             vidsToAdd[vidDateStr] = [];
                         }
                         vidsToAdd[vidDateStr].push({
+                            plItemId: video.snippet.id,
                             vidId: id,
                             vidName: video.snippet.title,
                             chanId: chanId,
@@ -209,6 +210,7 @@ export class FetchVidsWidget extends AppWidget {
 
         // Cache our results!
         LS.vidsToAdd = vidsToAdd;
+        LS.vidsToRemove = undefined;
     }
 }
 

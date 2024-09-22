@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-import { App, countVidsToAdd } from './app';
+import { App, countVidsToAdd, removeVidToAdd, getOneRemovalVidForBin } from './app';
 import LS from './lstor';
 import { AppWidget } from './w-app';
 import { WidgetArgs } from './widget';
@@ -68,7 +68,19 @@ export class FillBinsWidget extends AppWidget {
                         numer.text(c);
                         addP.removeAttr('style');
 
-                        // HERE'S THE NETWORK CALL
+                        let rmVid = getOneRemovalVidForBin(vidsToRemove, bin);
+                        if (rmVid !== undefined && vidsToRemove !== undefined) {
+                            // Before every video we wish to add, we
+                            // must first remove a video from the
+                            // destination "bin" channel, to make space
+                            // (if necessary).
+                            //
+                            // HERE'S A NETWORK CALL
+                            let rmResponse : any = await tube.removeVideo(rmVid.rec.plItemId);
+                            removeVidToAdd(vidsToRemove[bin], rmVid.ds, rmVid.rec);
+                        }
+
+                        // HERE'S A NETWORK CALL
                         // NOTE: If we add multiplexed network calls
                         // here, make sure the Stop button lets
                         // currently-in-flight network calls finish up
