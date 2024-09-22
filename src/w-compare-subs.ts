@@ -46,7 +46,6 @@ export class CompareBinsSubsWidget extends AppWidget {
         let assign = this._app.getAssignedBins();
         let iter : AsyncIterable<YT.SubscriptionItem> = tube.subscriptions;
         if (!useCache) {
-            console.log("not useCache");
             iter = tube.subscriptions.getAsyncUpdatedIterator();
         }
         for await (let chan of iter) {
@@ -54,6 +53,7 @@ export class CompareBinsSubsWidget extends AppWidget {
             let t = $('<span class="subs-title" />');
             t.text(chan.snippet.title);
             t.appendTo(li);
+            $('<span>&nbsp;</span>').appendTo(li);
             let id = $('<span class="subs-id" />');
             id.text(chan.snippet.resourceId.channelId);
             id.appendTo(li);
