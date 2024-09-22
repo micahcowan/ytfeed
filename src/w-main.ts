@@ -103,6 +103,7 @@ export class MainWidget extends AppWidget {
             let cnt = countVidsToAdd(vidsToAdd);
             if (cnt === 0) {
                 LS.vidsToAdd = undefined;
+                LS.vidsToRemove = undefined;
                 this._refreshFeederView(); // restart
                 return
             }

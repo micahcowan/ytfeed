@@ -1,7 +1,7 @@
 // lstor: convenient management of localStorage items
 import { z } from 'zod'
 
-import { BinsStruct, VidsToAdd } from './app'
+import { BinsStruct, VidsToAdd, VidsToRemove } from './app'
 import * as YT from './youtube'
 
 export default class LS {
@@ -135,6 +135,28 @@ export default class LS {
             };
             localStorage['ytfeed-cached-vids-to-add']
                 = JSON.stringify(vidsToAdd,replacer,1);
+        }
+        LS._fireUpdated();
+    }
+
+    static get vidsToRemove() : VidsToRemove | undefined {
+        let ls = localStorage['ytfeed-cached-vids-to-rm'];
+        if (ls === undefined)
+            return ls;
+        return VidsToRemove.parse(JSON.parse(ls));
+    }
+    static set vidsToRemove(vidsToRemove : VidsToRemove | undefined) {
+        if (vidsToRemove === undefined) {
+            delete localStorage['ytfeed-cached-vids-to-rm'];
+        } else {
+            let replacer = (key : any, val : any) => {
+                if (val instanceof Set) {
+                    return Array.from(val);
+                }
+                return val;
+            };
+            localStorage['ytfeed-cached-vids-to-rm']
+                = JSON.stringify(vidsToRemove,replacer,1);
         }
         LS._fireUpdated();
     }

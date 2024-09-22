@@ -17,6 +17,7 @@ export class FillBinsWidget extends AppWidget {
 
     async _doAsyncBinFilling() {
         let vidsToAdd = LS.vidsToAdd;
+        let vidsToRemove = LS.vidsToRemove;
         let no = this._no;
         let ec = this._ec;
         let tube = this._app.ytApi;
@@ -101,6 +102,7 @@ export class FillBinsWidget extends AppWidget {
         finally {
             // Ensure our progress is saved to localStorage.
             LS.vidsToAdd = vidsToAdd;
+            LS.vidsToRemove = vidsToRemove;
 
             interP.removeAttr('style');
             remainP.text(vidCount - c + 1);

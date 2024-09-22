@@ -32,6 +32,10 @@ export const VidsToAdd =
     z.record( z.string(), z.array( VidsToAddRec ));
 export type VidsToAdd = z.infer<typeof VidsToAdd>;
 
+export const VidsToRemove =
+    z.record( z.string(), VidsToAdd );
+export type VidsToRemove = z.infer<typeof VidsToRemove>;
+
 export function mergeVidToAdd(v : VidsToAdd, dateStr : string, vid : VidsToAddRec) {
     if (!(dateStr in v)) {
         v[dateStr] = [];

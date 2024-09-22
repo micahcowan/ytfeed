@@ -1,7 +1,16 @@
 import $ from 'jquery'
 import { z } from 'zod';
 
-import { App, BinsStruct, VidsToAdd, VidsToAddRec, mergeVidToAdd, countVidsToAdd } from './app'
+import {
+    App,
+    BinsStruct,
+    VidsToAdd,
+    VidsToAddRec,
+    VidsToRemove,
+    mergeVidToAdd,
+    countVidsToAdd,
+    removeVidToAdd
+} from './app'
 import { WidgetArgs } from './widget'
 import { AppWidget } from './w-app'
 import LS from './lstor'
@@ -86,6 +95,8 @@ export class PreviewAddRmWidget extends AppWidget {
 
         let binEls = this._binEls;
         let remove = true;
+        let binRemoves : VidsToRemove = {};
+        let removesCount : number = 0;
         try {
             for (let bin in binEls) {
                 let {
@@ -94,16 +105,25 @@ export class PreviewAddRmWidget extends AppWidget {
                 } = binEls[bin];
 
                 // Grep out just the vids that apply to this bin
+                let { maxCount } = LS.getBinLimits(bin);
                 let vidsToAdd = LS.vidsToAdd;
+                if (vidsToAdd === undefined) vidsToAdd = {};
                 let vidsMixed : VidsToAdd = {};
                 let vidsNoAdd : VidsToAdd = {};
                 let vidsRemove : VidsToAdd = {};
                 let c = 0;
-                for (let dateStr in vidsToAdd) {
+                for (let dateStr of Object.keys(vidsToAdd).sort()) {
                     for (let vid of vidsToAdd[dateStr]) {
-                        if (vid.destBins.has(bin)) {
+                        if (!(vid.destBins.has(bin))) {
+                            // not for this bin, do nothing
+                        }
+                        else if (c < maxCount) {
                             mergeVidToAdd(vidsMixed, dateStr, vid);
                             ++c;
+                        }
+                        else {
+                            // We've exceeded max vids, omit the rest
+                            mergeVidToAdd(vidsNoAdd, dateStr, vid);
                         }
                     }
                 }
@@ -126,12 +146,26 @@ export class PreviewAddRmWidget extends AppWidget {
                 }
                 if (c == 0) summ.addClass('de-emph');
 
-                let { maxCount } = LS.getBinLimits(bin);
-                if (c == 0) {
-                }
                 if (c > maxCount) {
                     // We need to weed some out. Throw things out
                     //  until we reach our target.
+                    for (let dateStr of Object.keys(vidsMixed).sort()) {
+                        for (let vid of vidsMixed[dateStr]) {
+                            if (!vid.present || !(vid.destBins.has(bin))) {
+                                continue;
+                            }
+                            mergeVidToAdd(vidsRemove, dateStr, vid);
+                        }
+                    }
+                    summ.addClass('vid-removal');
+                }
+                // Now remove the vids in vidsRemove, from vidsMixed
+                // (can't do while we're actively scanning it, could
+                // disrupt the scan)
+                for (let dateStr in vidsRemove) {
+                    for (let vid of vidsRemove[dateStr]) {
+                        removeVidToAdd(vidsMixed, dateStr, vid);
+                    }
                 }
 
                 // Update counts
@@ -161,12 +195,22 @@ export class PreviewAddRmWidget extends AppWidget {
                     }
                 }
 
+                // Save removals (if any) for bin
+                if (Object.keys(vidsRemove).length > 0) {
+                    binRemoves[bin] = vidsRemove;
+                    removesCount += countVidsToAdd(vidsRemove);
+                }
             }
         } catch(err) {
             this.errorHandler(err);
             remove = false;
         }
 
+        if (removesCount > 0) {
+            LS.vidsToRemove = binRemoves;
+            $('<p></p>').insertAfter(loading)
+                .text(`Saved ${removesCount} videos to be REMOVED.`);
+        }
         if (remove) loading.remove();
     }
 }

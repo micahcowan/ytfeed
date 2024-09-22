@@ -80,7 +80,6 @@ export class FilterVidsWidget extends AppWidget {
         }
         await requestBatcher.finish();
         loading.remove();
-        //LS.vidsToAdd = vidsToAdd; // update
         $(`<p>To-add videos reduced to ${countVidsToAdd(vidsToAdd)}</p>`).appendTo(no);
         LS.vidsToAdd = vidsToAdd; // Update!
     }
