@@ -312,20 +312,20 @@ export class SubscriptionList implements AsyncIterable<SubscriptionItem> {
                 }});
     }
 
-    async *[Symbol.asyncIterator]() {
+    [Symbol.asyncIterator]() {
         if (this.cached) {
-            let cache = LS.subsCache;
-            for (let item of cache) {
-                yield SubscriptionItem.parse(item);
-            }
+            return this.getAsyncIter();
         }
         else {
             return this.getAsyncUpdatedIterator();
         }
     }
 
-    getAsyncIter() {
-        return this[Symbol.asyncIterator]();
+    async *getAsyncIter() {
+        let cache = LS.subsCache;
+        for (let item of cache) {
+            yield SubscriptionItem.parse(item);
+        }
     }
 
     async *getAsyncUpdatedIterator() {
