@@ -23,8 +23,8 @@ export type Error = z.infer<typeof Error>;
 export type YtError = z.infer<typeof Error>;
 
 export const PlaylistItem = z.object({
+    id: z.string(), // of playlistItem, NOT of video
     snippet: z.object({
-        id: z.string(), // of playlistItem, NOT of video
         title: z.string(),
         publishedAt: z.optional(z.string().datetime()),
         videoOwnerChannelId: z.optional(z.string()),

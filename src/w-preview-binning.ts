@@ -134,7 +134,7 @@ export class PreviewAddRmWidget extends AppWidget {
                     let dateStr = item.snippet.publishedAt as string;
                     let vid : VidsToAddRec = {
                         present: true,
-                        plItemId: item.snippet.id,
+                        plItemId: item.id,
                         vidId: item.snippet.resourceId.videoId,
                         vidName: item.snippet.title,
                         chanId: item.snippet.videoOwnerChannelId as string,

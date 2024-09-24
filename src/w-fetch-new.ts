@@ -169,7 +169,7 @@ export class FetchVidsWidget extends AppWidget {
                             vidsToAdd[vidDateStr] = [];
                         }
                         vidsToAdd[vidDateStr].push({
-                            plItemId: video.snippet.id,
+                            plItemId: video.id,
                             vidId: id,
                             vidName: video.snippet.title,
                             chanId: chanId,
