@@ -116,8 +116,15 @@ export class FillBinsWidget extends AppWidget {
             LS.vidsToAdd = vidsToAdd;
             LS.vidsToRemove = vidsToRemove;
 
-            interP.removeAttr('style');
-            remainP.text(vidCount - c + 1);
+            let remainCount = vidCount - c + 1;
+            if (remainCount == 0) {
+                interP.text('All finished!');
+                interP.removeAttr('style');
+            }
+            else {
+                interP.removeAttr('style');
+                remainP.text(remainCount);
+            }
         }
     }
 }
