@@ -10,6 +10,7 @@ import { FetchVidsWidget } from './w-fetch-new'
 import { FilterVidsWidget } from './w-filter'
 import { PreviewAddRmWidget } from './w-preview-binning'
 import { FillBinsWidget  }from './w-fill'
+import { SortBinsWidget  }from './w-sort'
 
 export class MainWidget extends AppWidget {
     private _feederDiv : JQuery<HTMLElement>;
@@ -24,6 +25,7 @@ export class MainWidget extends AppWidget {
         $('<div class="widget-section-heading">Playlist Feeder</div>').appendTo(this._no);
         this._feederDiv = $('<div></div>').appendTo(this._no);
         this._doFeederView();
+        this._doSortBinsView();
     }
 
     _cacheUpdated() {
@@ -171,5 +173,12 @@ export class MainWidget extends AppWidget {
             'cacheUpdated',
             () => { this._cacheUpdated(); },
         )
+    }
+
+    _doSortBinsView() {
+        let sortBtn = $(`<button>Sort Channels by Newest Video</button>`)
+            .appendTo(this._no);
+        this.makeSingleSpawner(sortBtn, () => new SortBinsWidget(this._app),
+                               Symbol.for('sort bins'));
     }
 }
