@@ -33,6 +33,9 @@ export class CompareBinsSubsWidget extends AppWidget {
         ec.append(loading);
 
         let x;
+        x = $('<details open="open"><summary>UNKNOWN bins (not subscribed; remove these!)</summary></details>')
+            .appendTo(ec);
+        let unkBinsUl = $('<ul class="subscriptions"/>').appendTo(x);
         x = $('<details open="open"><summary>UNKNOWN subscriptions</summary></details>')
             .appendTo(ec);
         let unkSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
@@ -43,6 +46,7 @@ export class CompareBinsSubsWidget extends AppWidget {
             .appendTo(ec);
         let allSubsUl = $('<ul class="subscriptions"/>').appendTo(x);
 
+        let registry : any = {};
         let assign = this._app.getAssignedBins();
         let iter : AsyncIterable<YT.SubscriptionItem> = tube.subscriptions;
         if (!useCache) {
@@ -61,6 +65,7 @@ export class CompareBinsSubsWidget extends AppWidget {
             li.appendTo(allSubsUl);
             li.slideDown('fast');
 
+            registry[chan.snippet.resourceId.channelId] = true;
             let a = assign[chan.snippet.resourceId.channelId];
             if (a === undefined) {
                 li.clone().appendTo(unkSubsUl);
@@ -76,6 +81,24 @@ export class CompareBinsSubsWidget extends AppWidget {
         p.text(`There are ${$('li', allSubsUl).length} subscribed channels:
                ${$('li', unkSubsUl).length} unknown, and ${$('li', ignSubsUl).length} ignored.`);
         p.insertBefore(loading);
+
+        // Now loop through bins, and make sure each one corresponds to
+        //  a subscribed channel.
+        for (let chanId of Object.keys(assign)) {
+            if (!registry[chanId]) {
+                let li = $('<li />');
+                let t = $('<span class="subs-title" />');
+                t.text(assign[chanId].name);
+                t.appendTo(li);
+                $('<span>&nbsp;</span>').appendTo(li);
+                let id = $('<span class="subs-id" />');
+                id.text(chanId);
+                id.appendTo(li);
+                //li.hide();
+                li.appendTo(unkBinsUl);
+                //li.slideDown('fast');
+            }
+        }
 
         loading.remove();
 
