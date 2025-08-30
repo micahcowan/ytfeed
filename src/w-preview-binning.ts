@@ -130,6 +130,7 @@ export class PreviewAddRmWidget extends AppWidget {
 
                 // Get the vids already in this bin (fetch!)
                 let cPres = 0;
+                let reverseList : [ string, VidsToAddRec ][] = [];
                 for await (let item of tube.getPlaylistItems(bin)) {
                     let dateStr = item.snippet.publishedAt as string;
                     let vid : VidsToAddRec = {
@@ -142,6 +143,7 @@ export class PreviewAddRmWidget extends AppWidget {
                         destBins: new Set<string>,
                     };
                     mergeVidToAdd(vidsMixed, dateStr, vid);
+                    reverseList.unshift([dateStr, vid]);
                     ++c;
                     ++cPres;
                 }
@@ -150,16 +152,15 @@ export class PreviewAddRmWidget extends AppWidget {
                 if (c > maxCount) {
                     // We need to weed some out. Throw things out
                     //  until we reach our target.
-                    for (let dateStr of Object.keys(vidsMixed).sort()) {
+                    for (let el of reverseList) {
                         if (c <= maxCount) break;
-                        for (let vid of vidsMixed[dateStr]) {
-                            if (!vid.present) {
-                                continue;
-                            }
-                            mergeVidToAdd(vidsRemove, dateStr, vid);
-                            vid.present = false;
-                            --c;
+                        let [ dateStr, vid ] = el;
+                        if (!vid.present) {
+                            continue;
                         }
+                        mergeVidToAdd(vidsRemove, dateStr, vid);
+                        vid.present = false;
+                        --c;
                     }
                     summ.addClass('vid-removal');
                 }
@@ -192,7 +193,7 @@ export class PreviewAddRmWidget extends AppWidget {
                     }
                 }
                 // Add to <ul>s
-                for (let ds of Object.keys(vidsMixed).sort(rsort)) {
+                for (let ds in vidsMixed) {
                     for (let vid of vidsMixed[ds]) {
                         makeListItem(ds, vid).appendTo(ulMixed);
                     }
