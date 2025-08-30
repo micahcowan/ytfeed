@@ -151,11 +151,14 @@ export class PreviewAddRmWidget extends AppWidget {
                     // We need to weed some out. Throw things out
                     //  until we reach our target.
                     for (let dateStr of Object.keys(vidsMixed).sort()) {
+                        if (c <= maxCount) break;
                         for (let vid of vidsMixed[dateStr]) {
-                            if (!vid.present || !(vid.destBins.has(bin))) {
+                            if (!vid.present) {
                                 continue;
                             }
                             mergeVidToAdd(vidsRemove, dateStr, vid);
+                            vid.present = false;
+                            --c;
                         }
                     }
                     summ.addClass('vid-removal');
@@ -177,22 +180,27 @@ export class PreviewAddRmWidget extends AppWidget {
                 cntAdd.text(countVidsToAdd(vidsMixed, (x) => !x.present));
                 cntNoAdd.text(countVidsToAdd(vidsNoAdd));
 
+                let rsort = (a : string, b : string) => {
+                    if (a > b) { return -1; }
+                    else if (b > a) { return 1; }
+                    return 0;
+                };
                 // Add to <ul>s
-                for (let ds in vidsNoAdd) {
+                for (let ds of Object.keys(vidsNoAdd).sort(rsort)) {
                     for (let vid of vidsNoAdd[ds]) {
-                        makeListItem(vid).appendTo(ulNoAdd);
+                        makeListItem(ds, vid).appendTo(ulNoAdd);
                     }
                 }
                 // Add to <ul>s
-                for (let ds in vidsMixed) {
+                for (let ds of Object.keys(vidsMixed).sort(rsort)) {
                     for (let vid of vidsMixed[ds]) {
-                        makeListItem(vid).appendTo(ulMixed);
+                        makeListItem(ds, vid).appendTo(ulMixed);
                     }
                 }
                 // Add to <ul>s
-                for (let ds in vidsRemove) {
+                for (let ds of Object.keys(vidsRemove).sort(rsort)) {
                     for (let vid of vidsRemove[ds]) {
-                        makeListItem(vid).appendTo(ulRemove);
+                        makeListItem(ds, vid).appendTo(ulRemove);
                     }
                 }
 
@@ -216,8 +224,10 @@ export class PreviewAddRmWidget extends AppWidget {
     }
 }
 
-function makeListItem(vid : VidsToAddRec) : JQHE {
-    let li = $('<li></li>')
+function makeListItem(dateStr : string, vid : VidsToAddRec) : JQHE {
+    let li = $('<li></li>');
+    let ds = $('<span></span>)').appendTo(li);
+    ds.text(`${dateStr} - `);
     let st = $('<strong></strong>').appendTo(li);
     st.text(vid.vidName);
     $('<span>&nbsp;</span>').appendTo(li);
