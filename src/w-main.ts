@@ -48,12 +48,13 @@ export class MainWidget extends AppWidget {
     }
 
     _doFeederView() {
-        LS.addEventListener('cacheUpdated', () => { this._refreshFeederView(); });
+        LS.addEventListener('cacheUpdated', () => { this._refreshFeederView(); });6
         this._refreshFeederView();
     }
 
     _refreshFeederView() {
         let vidsToAdd = LS.vidsToAdd;
+        let vidsToRemove = LS.vidsToRemove;
         let fd = this._feederDiv;
         fd.empty();
 
@@ -97,6 +98,17 @@ export class MainWidget extends AppWidget {
         enabler = makeEnabler(fillBtn);
         enabler();
         this.makeSingleSpawner(fillBtn, () => new FillBinsWidget(this._app), Symbol.for('do the fills'), enabler);
+
+        if (vidsToRemove !== undefined
+                && Object.keys(vidsToRemove).length != 0) {
+            let c = 0;
+            for (let bin in vidsToRemove) {
+                c += countVidsToAdd(vidsToRemove[bin]);
+            }
+
+            let rmP = $('<p></p>').appendTo(fd);
+            rmP.text(`There are ${c} videos ready to be removed.`);
+        }
 
         let infoP = $('<p></p>').appendTo(fd);
         if (vidsToAdd === undefined) {
