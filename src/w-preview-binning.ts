@@ -227,7 +227,10 @@ export class PreviewAddRmWidget extends AppWidget {
 function makeListItem(dateStr : string, vid : VidsToAddRec) : JQHE {
     let li = $('<li></li>');
     let ds = $('<span></span>)').appendTo(li);
-    ds.text(`${dateStr} - `);
+    let dd = new Date(dateStr);
+    let td = (s : number) : string => { return ((s < 10) ? '0' : '') + s; };
+    let dsFormatted = `${dd.getFullYear()}-${td(dd.getMonth()+1)}-${td(dd.getDate())}`;
+    ds.text(`${dsFormatted} - `);
     let st = $('<strong></strong>').appendTo(li);
     st.text(vid.vidName);
     $('<span>&nbsp;</span>').appendTo(li);
