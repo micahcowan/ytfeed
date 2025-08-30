@@ -84,20 +84,41 @@ export class FillBinsWidget extends AppWidget {
                         // NOTE: If we add multiplexed network calls
                         // here, make sure the Stop button lets
                         // currently-in-flight network calls finish up
-                        let response : any = await tube.addVideo(bin, vid.vidId);
-                        if (response.snippet.resourceId.videoId !== vid.vidId) {
-                            this._app.addError(
-                                'Video Insert: RESPONSE UNRECOGNIZED',
-                                "Video insert request succeeded, but the response did not confirm the video's id",
-                                JSON.stringify(response,null,2)
-                            );
+                        try {
+                            let response : any
+                                = await tube.addVideo(bin, vid.vidId);
 
-                            return; // No more processing when we get weird
-                                    // results
+                            if (response.snippet.resourceId.videoId
+                                    !== vid.vidId) {
+                                this._app.addError(
+                                    'Video Insert: RESPONSE UNRECOGNIZED',
+                                    "Video insert request succeeded, but the response did not confirm the video's id",
+                                    JSON.stringify(response,null,2)
+                                );
+
+                                return; // No more processing when we get weird
+                                        // results
+                            }
+
+                            // Indicate the task is done
+                            status.text('Successfully added');
+                        } catch (e : any) {
+                            if (e.ytError === undefined
+                                || e.ytError.error === undefined
+                                || e.ytError.error.code === undefined
+                                || e.ytError.error.code != '404')
+                            {
+                                throw e; // rethrow
+                            }
+                            else {
+                                // This video no longer exists. Move on.
+                                status.text('Due to disappeared video, skipping');
+                                this._app.addError(
+                                    'Video Disappeared',
+                                    `Tried to add video ${vid.vidName} to bin ${binName}, but it disappeared.`
+                                );
+                            }
                         }
-
-                        // Indicate the task is done
-                        status.text('Successfully added');
                         p.removeClass('loading-desc');
 
                         ++c;
