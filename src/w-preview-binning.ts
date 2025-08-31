@@ -216,11 +216,9 @@ export class PreviewAddRmWidget extends AppWidget {
             remove = false;
         }
 
-        if (removesCount > 0) {
-            LS.vidsToRemove = binRemoves;
-            $('<p></p>').insertAfter(loading)
-                .text(`Saved ${removesCount} videos to be REMOVED.`);
-        }
+        LS.vidsToRemove = binRemoves;
+        $('<p></p>').insertAfter(loading)
+            .text(`Saved ${removesCount} videos to be REMOVED.`);
         if (remove) loading.remove();
     }
 }
