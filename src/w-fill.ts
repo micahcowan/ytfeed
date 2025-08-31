@@ -68,16 +68,48 @@ export class FillBinsWidget extends AppWidget {
                         numer.text(c);
                         addP.removeAttr('style');
 
-                        let rmVid = getOneRemovalVidForBin(vidsToRemove, bin);
-                        if (rmVid !== undefined && vidsToRemove !== undefined) {
+                        let rmVidRec = getOneRemovalVidForBin(vidsToRemove, bin);
+                        if (rmVidRec !== undefined && vidsToRemove !== undefined) {
                             // Before every video we wish to add, we
                             // must first remove a video from the
                             // destination "bin" channel, to make space
                             // (if necessary).
+                            let { ds: rmDs, rec: rmVid } = rmVidRec;
+
+                            let prm = $('<p class="loading-desc">&nbsp<span>Attempting to REMOVE</span> video<br /><strong></strong> (<span class="yt-id"></span>) from channel <br /><strong></strong> (<span class="yt-id"></span>) from bin <br /><strong></strong> (<span></span>)</p>');
+
+                            let rmStatus = $($('span', p).get(0) as HTMLElement);
+                            $($('strong', p).get(0) as HTMLElement).text(rmVid.vidName);
+                            $($('span', p).get(1) as HTMLElement).text(rmVid.vidId);
+                            $($('strong', p).get(1) as HTMLElement).text(rmVid.chanName);
+                            $($('span', p).get(2) as HTMLElement).text(rmVid.chanId);
+                            $($('strong', p).get(2) as HTMLElement).text(binName);
+                            $($('span', p).get(3) as HTMLElement).text(bin);
+                            $('<span class="isoDate"></span>').text(ds).prependTo(p);
                             //
                             // HERE'S A NETWORK CALL
-                            let rmResponse : any = await tube.removeVideo(rmVid.rec.plItemId);
-                            removeVidToAdd(vidsToRemove[bin], rmVid.ds, rmVid.rec);
+                            try {
+                                let rmResponse : any = await tube.removeVideo(rmVid.plItemId);
+                            } catch (e : any) {
+                                if (e.ytError === undefined
+                                    || e.ytError.error === undefined
+                                    || e.ytError.error.code === undefined
+                                    || e.ytError.error.code != '404')
+                                {
+                                    throw e; // rethrow
+                                }
+                                else {
+                                    // This video no longer exists. Move on.
+                                    rmStatus.text('Due to disappearance, skipping FAILED attempt to REMOVE');
+                                    this._app.addError(
+                                        'Video Disappeared',
+                                        `Tried to rm video ${rmVid.vidName} from bin ${binName}, but it disappeared.`
+                                    );
+                                }
+                            }
+
+                            removeVidToAdd(vidsToRemove[bin], rmVidRec.ds, rmVidRec.rec);
+                            rmStatus.text('Successfully REMOVED');
                         }
 
                         // HERE'S A NETWORK CALL
