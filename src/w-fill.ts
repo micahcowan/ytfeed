@@ -34,6 +34,9 @@ export class FillBinsWidget extends AppWidget {
         let addP = $('<p style="display: none">Adding video <span></span>/<span></span>...</p>').appendTo(no);
         let numer = $($('span', addP)[0]);
         let denom =  $($('span', addP)[1]);
+
+        let rmP = $('<p>Removed <span>0</span> videos.</p>').appendTo(no);
+        let rmCount = $($('span', rmP)[0]);
         let interP = $('<p style="display: none">Interrupted! <span></span> videos remaining to be added next time.</p>').appendTo(no);
         let remainP = $($('span', interP)[0]);
 
@@ -42,6 +45,7 @@ export class FillBinsWidget extends AppWidget {
 
         // Oldest first
         let c = 1;
+        let rmC = 0;
         let names = LS.bins? LS.bins['pl-names'] : {};
         let sorter = (a : string, b :string) => ((new Date(a)).valueOf() - (new Date(b)).valueOf());
         try {
@@ -77,15 +81,16 @@ export class FillBinsWidget extends AppWidget {
                             let { ds: rmDs, rec: rmVid } = rmVidRec;
 
                             let prm = $('<p class="loading-desc">&nbsp<span>Attempting to REMOVE</span> video<br /><strong></strong> (<span class="yt-id"></span>) from channel <br /><strong></strong> (<span class="yt-id"></span>) from bin <br /><strong></strong> (<span></span>)</p>');
+                            prm.prependTo(ec);
 
-                            let rmStatus = $($('span', p).get(0) as HTMLElement);
-                            $($('strong', p).get(0) as HTMLElement).text(rmVid.vidName);
-                            $($('span', p).get(1) as HTMLElement).text(rmVid.vidId);
-                            $($('strong', p).get(1) as HTMLElement).text(rmVid.chanName);
-                            $($('span', p).get(2) as HTMLElement).text(rmVid.chanId);
-                            $($('strong', p).get(2) as HTMLElement).text(binName);
-                            $($('span', p).get(3) as HTMLElement).text(bin);
-                            $('<span class="isoDate"></span>').text(ds).prependTo(p);
+                            let rmStatus = $($('span', prm).get(0) as HTMLElement);
+                            $($('strong', prm).get(0) as HTMLElement).text(rmVid.vidName);
+                            $($('span', prm).get(1) as HTMLElement).text(rmVid.vidId);
+                            $($('strong', prm).get(1) as HTMLElement).text(rmVid.chanName);
+                            $($('span', prm).get(2) as HTMLElement).text(rmVid.chanId);
+                            $($('strong', prm).get(2) as HTMLElement).text(binName);
+                            $($('span', prm).get(3) as HTMLElement).text(bin);
+                            $('<span class="isoDate"></span>').text(ds).prependTo(prm);
                             //
                             // HERE'S A NETWORK CALL
                             try {
@@ -110,6 +115,8 @@ export class FillBinsWidget extends AppWidget {
 
                             removeVidToAdd(vidsToRemove[bin], rmVidRec.ds, rmVidRec.rec);
                             rmStatus.text('Successfully REMOVED');
+                            ++rmC;
+                            rmCount.text(rmC);
                         }
 
                         // HERE'S A NETWORK CALL
