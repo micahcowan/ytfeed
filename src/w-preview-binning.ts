@@ -142,6 +142,10 @@ export class PreviewAddRmWidget extends AppWidget {
                         chanName: item.snippet.videoOwnerChannelTitle as string,
                         destBins: new Set<string>,
                     };
+                    // Following fields are missing if video deleted
+                    // or made private
+                    if (vid.chanName === undefined) vid.chanName = 'CHANNEL UNKNOWN';
+                    if (vid.chanId === undefined) vid.chanId = 'CHANNEL UNKNOWN';
                     mergeVidToAdd(vidsMixed, dateStr, vid);
                     reverseList.unshift([dateStr, vid]);
                     ++c;
