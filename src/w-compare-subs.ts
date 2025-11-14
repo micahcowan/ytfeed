@@ -58,8 +58,9 @@ export class CompareBinsSubsWidget extends AppWidget {
             t.text(chan.snippet.title);
             t.appendTo(li);
             $('<span>&nbsp;</span>').appendTo(li);
-            let id = $('<span class="subs-id" />');
+            let id = $('<a class="subs-id" />');
             id.text(chan.snippet.resourceId.channelId);
+            id.attr('href', 'https://www.youtube.com/channel/' + chan.snippet.resourceId.channelId);
             id.appendTo(li);
             li.hide();
             li.appendTo(allSubsUl);
